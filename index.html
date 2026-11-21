@@ -1902,6 +1902,7 @@ async function rebuild(){
   try{
     const spec=computeSpec(),P=resolveDesign(spec);
     if(S.sheetImg){P.sheet={c:S.sheetImg};P.plain=S.sheetPlain;const g=buildDieline(spec,P,null,true).geo;P.sheet.map=sheetMap(g,S.sheetImg);P.faceImg=Object.assign(sheetFaces(g,S.sheetImg,spec),S.faceImg);}
+    else if(S.dieFaces){P.faceImg=Object.assign({},S.dieFaces,S.faceImg);P.plain=true;}
     await ensureFonts(P,spec);
     const F=drawFaces(spec,P).F;
     buildBox(spec,P,F);
@@ -2046,7 +2047,36 @@ function edgeSample(){if(typeof SUPA==='undefined'||!SUPA.url||!SUPA.key)return 
       const j=await r.json().catch(()=>({}));if(!r.ok||!j.result)throw{code:j.code==='rate_limited'?'rate_limited':j.code==='image_rejected'?'image_rejected':j.code==='no_key'?'not_granted':'error',message:j.code||String(r.status)};
       return j.result;}};}
 function loadImg(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});}
-// Read an object's outline straight from the photo pixels: background = border colour, foreground = colour difference
+// A flat dieline photo (panels laid out on a light background): find the row of four walls and the top/bottom flaps,
+// measure the proportions, and cut each panel's artwork out so it can be printed on the 3D box as is.
+function importDieline(src,r){try{
+  const sc=Math.min(1,700/Math.max(src.width,src.height)),W=Math.round(src.width*sc),H=Math.round(src.height*sc),K=1/sc;
+  const c=makeCanvas(W,H),x=c.getContext('2d');x.drawImage(src,0,0,W,H);const d=x.getImageData(0,0,W,H).data;
+  const fg=new Uint8Array(W*H);for(let i=0,p=0;i<W*H;i++,p+=4){const v=Math.min(d[p],d[p+1],d[p+2]);if(255-v>9||Math.max(d[p],d[p+1],d[p+2])-v>14)fg[i]=1;}
+  const rowc=new Array(H).fill(0);for(let j=0;j<H;j++){let n=0;for(let i=0;i<W;i++)n+=fg[j*W+i];rowc[j]=n;}
+  const mx=Math.max(...rowc);if(mx<W*.25)return null;
+  let y0=-1,y1=-1,bs=-1,bl=0;for(let j=0;j<=H;j++){const on=j<H&&rowc[j]>=mx*.82;if(on&&bs<0)bs=j;if(!on&&bs>=0){if(j-bs>bl){bl=j-bs;y0=bs;y1=j-1;}bs=-1;}}
+  if(bl<H*.12)return null;
+  const colc=new Array(W).fill(0);for(let i=0;i<W;i++){let n=0;for(let j=y0;j<=y1;j++)n+=fg[j*W+i];colc[i]=n/(y1-y0+1);}
+  let x0=colc.findIndex(v=>v>.6),x1=W-1-[...colc].reverse().findIndex(v=>v>.6);if(x0<0||x1-x0<W*.3)return null;
+  const runs=(from,to,step)=>{const cols=[];for(let i=x0;i<=x1;i++){let n=0;for(let j=from;j!==to;j+=step){if(fg[j*W+i])n++;else break;}cols.push(n);}return cols;};
+  const up=runs(y0-1,-1,-1),dn=runs(y1+1,H,1);
+  const span=(cols)=>{const m=Math.max(...cols);if(m<(y1-y0)*.08)return null;let a=cols.findIndex(v=>v>m*.6),b=cols.length-1-[...cols].reverse().findIndex(v=>v>m*.6);return{a:x0+a,b:x0+b,h:m};};
+  const T=span(up),B=span(dn);const ref=T||B;if(!ref)return null;
+  const Wp=ref.b-ref.a,L=x1-x0,Dp=Math.max(L*.08,(L-2*Wp)/2),Hp=y1-y0;
+  // panels left to right: walk out from the flap-carrying panel, alternating depth and width
+  const panels=[];let s=ref.a;while(s-x0>Dp*.5){const w=panels.length%2===0?Dp:Wp;panels.unshift([Math.max(x0,s-w),s]);s-=w;}if(s>x0&&panels.length)panels[0][0]=x0;
+  const iRef=panels.length;panels.push([ref.a,ref.b]);s=ref.b;let k=0;while(x1-s>Dp*.5){const w=k%2===0?Dp:Wp;panels.push([s,Math.min(x1,s+w)]);s+=w;k++;}if(panels.length)panels[panels.length-1][1]=x1;
+  if(panels.length<4)return null;
+  const fi=r&&+r.front_panel>=1&&+r.front_panel<=panels.length?+r.front_panel-1:iRef;
+  const name=['front','right','back','left'],faces={},n=panels.length;
+  const crop=(px0,py0,pw,ph,rot)=>{const sw=rot%180!==0,cv=makeCanvas(sw?ph*K:pw*K,sw?pw*K:ph*K),cx=cv.getContext('2d');cx.translate(cv.width/2,cv.height/2);cx.rotate(rot*Math.PI/180);cx.drawImage(src,px0*K,py0*K,pw*K,ph*K,-pw*K/2,-ph*K/2,pw*K,ph*K);cv.__exact=true;return cv;};
+  for(let q=0;q<4;q++){const pi=(fi+q)%n,pn=panels[pi];faces[name[q]]=crop(pn[0],y0,pn[1]-pn[0],Hp,0);}
+  // top and bottom: the flap next to the wall band, one depth deep; the 3D top shows its front edge at the bottom of the picture
+  const onFront=(fl)=>Math.abs((fl.a+fl.b)/2-(panels[fi][0]+panels[fi][1])/2)<Wp*.5;
+  if(T){const h=Math.min(Dp,T.h);faces.top=crop(T.a,y0-h,T.b-T.a,h,onFront(T)?0:180);}
+  if(B){const h=Math.min(Dp,B.h);faces.bottom=crop(B.a,y1+1,B.b-B.a,h,onFront(B)?0:180);}
+  return{faces,ratio:{w:Wp,d:Dp,h:Hp}};}catch(e){console.error(e);return null;}}// Read an object's outline straight from the photo pixels: background = border colour, foreground = colour difference
 // or a strong edge. Picks the object nearest the centre (e.g. the middle bottle of three) and returns its width at
 // 48 heights, bottom to top, plus its height/width ratio.
 function silhouette(src){try{
@@ -2083,7 +2113,7 @@ async function setPhoto(file){
   if(!file||!/^image\//.test(file.type)){toast('이미지 파일을 올려 주세요');return;}
   const url=URL.createObjectURL(file);
   try{const img=await loadImg(url);const sc=Math.min(1,1600/Math.max(img.width,img.height));const c=makeCanvas(img.width*sc,img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-    G.photoBlob=await new Promise(r=>c.toBlob(r,'image/jpeg',.9));G.photoURL=c.toDataURL('image/jpeg',.82);G.photoColors=extractColors(c);G.photoSil=silhouette(c);G.ai=null;}
+    G.photoBlob=await new Promise(r=>c.toBlob(r,'image/jpeg',.9));G.photoURL=c.toDataURL('image/jpeg',.82);G.photoColors=extractColors(c);G.photoSil=silhouette(c);G.photoCanvas=c;G.ai=null;}
   catch(e){toast('사진을 읽지 못했어요');return;}finally{URL.revokeObjectURL(url);}
   $('#photoPrev').src=G.photoURL;$('#photoPrev').hidden=false;$('#dropEmpty').hidden=true;$('#photoAct').hidden=false;$('#photoFront').hidden=false;
   S.customPal=photoPal(G.photoColors);S.customColor=null;
@@ -2108,6 +2138,9 @@ const AI_PROMPT=`너는 화장품·식품·생활용품 패키지 디자이너�
  "styles": ["minimal|vivid|kraft|luxury|natural|tech 중 어울리는 순서로 2~4개"],
  "palette": {"bg": "#RRGGBB", "ink": "#RRGGBB", "accent": "#RRGGBB"},
  "pattern": "none|lines|blocks|dots|waves|stripes|grid|leaves|blobs|arcs|deco",
+ "photo_kind": "product|package|dieline|sketch 중 하나. dieline=상자를 펼친 전개도(면들이 평평하게 이어진 그림), sketch=손그림·스케치·일러스트",
+ "front_panel": "photo_kind가 dieline이면, 가운데 가로로 이어진 옆면 줄에서 제품명이 크게 있는 앞면이 왼쪽부터 몇 번째인지 숫자 (아니면 0)",
+ "box_mm": {"w": 상자 가로, "d": 상자 깊이, "h": 상자 높이} (dieline이나 package면 실제 상자 크기를 mm로 짐작, 아니면 null),
  "box_shape": "사진 속 상자의 겉모양을 한 문장으로 먼저 묘사 (옆에서 본 윤곽이 삼각형인지 직사각형인지, 리본·손잡이·뚜껑이 있는지)",
  "box_type": "위 묘사에 맞는 상자 하나. tuck=세로로 긴 직육면체 종이상자(위아래 꽂는 뚜껑), hanger=위에 걸이 구멍 탭, mailer=납작한 택배형(뚜껑이 앞으로 넘어옴), drawer=서랍처럼 빼는 상자, lidbase=뚜껑과 바닥이 나뉜 단단한 상자, rsc=큰 골판지 택배상자, tent=옆에서 보면 삼각형(앞·뒤 면이 꼭대기에서 맞닿음)이고 꼭대기를 리본으로 묶는 선물상자, handle=윗면에 종이판 손잡이(판지에 손가락 구멍이 뚫린 판)가 달린 캐리 박스. 중요: 리본·끈을 묶어 닫는 상자는 handle이 아니야. 앞·뒤 면이 위로 갈수록 좁아져 꼭대기에서 만나고 리본으로 묶으면 tent야. 사진 속 상자가 보이면 반드시 그 모양을 따라",
  "container_profile": "사진에 용기(병·튜브·자 등)가 보이면 그 실루엣을 숫자로 읽어 줘. 없으면 null. 형식: {\"body\": [바닥부터 어깨·목까지 높이를 같은 간격 12곳으로 나눠 잰 몸통 너비. 가장 넓은 곳=1], \"body_ratio\": 전체 높이 중 몸통(캡 아래까지) 비율 0.4~0.95, \"cap\": [캡 아래부터 맨 끝까지 8곳의 너비, 몸통 가장 넓은 곳=1 기준], \"body_color\": \"#RRGGBB\", \"cap_color\": \"#RRGGBB\", \"transparent\": true/false}",
@@ -2117,7 +2150,7 @@ const AI_PROMPT=`너는 화장품·식품·생활용품 패키지 디자이너�
  "leaflet_text": "설명서에 들어갈 사용 방법·주의사항을 줄바꿈으로 구분해 3~6줄",
  "summary": "사진에서 본 것과 추천 방향을 한두 문장으로"
 }
-규칙: dims_mm는 같은 종류 제품의 일반적인 실제 크기로 추정(mm 숫자). colors는 제품·브랜드를 대표하는 색 3~5개. mood는 2~4개. containers는 이 제품에 어울리는 용기 3가지이고, 사진에 용기가 보이면 그것을 첫째로. 제품이 상자 모양이거나 용기가 필요 없으면 type은 box, closure는 none.
+규칙: 사진이 손그림·스케치면 그려진 모양과 분위기를 실제 제품으로 해석해서, 가장 가까운 용기·상자·스타일·색을 골라. dims_mm는 같은 종류 제품의 일반적인 실제 크기로 추정(mm 숫자). colors는 제품·브랜드를 대표하는 색 3~5개. mood는 2~4개. containers는 이 제품에 어울리는 용기 3가지이고, 사진에 용기가 보이면 그것을 첫째로. 제품이 상자 모양이거나 용기가 필요 없으면 type은 box, closure는 none.
 palette는 사진 속 패키지(없으면 제품)의 실제 바탕색, 글자색, 포인트색을 그대로 읽어 줘. pattern은 사진 패키지에 무늬가 없으면 none. 사진이 상자 패키지 자체라면 dims_mm는 그 상자 안에 들어가는 제품 크기로, 글자(brand·name·tagline)는 상자에 적힌 그대로 읽어 줘. leaflet은 사진에 접혀서 붙는 설명서·리플렛이 보이면 그 접힌 면 수(2~4), 없으면 0.`;
 async function runAI(toDieline){
   if(!G.photoBlob){toast('먼저 사진을 올려 주세요');return;}
@@ -2162,9 +2195,15 @@ function applyAI(r,toDieline){
   const lf=+r.leaflet;if(lf>=2&&lf<=4){S.leaflet=lf;if(!['tuck','hanger'].includes(S.boxType))S.boxType='tuck';}
   if(r.leaflet_text)S.leafText=String(r.leaflet_text).slice(0,400);
   if(LAYOUTS[r.layout])S.layout=r.layout;
+  // flat dieline photo: rebuild it as a box with the photo's own panel artwork
+  S.dieFaces=null;let dieMsg='';
+  if(r.photo_kind==='dieline'&&G.photoCanvas){const im=importDieline(G.photoCanvas,r);
+    if(im){const bm=r.box_mm||{},q=im.ratio,Hmm=clamp(+bm.h||+(r.dims_mm||{}).h||S.h||120,20,800),k=Hmm/q.h,mat=BOARDS[BOARD_DEF.tuck].t,pad=2*(S.clearance+mat);
+      S.boxType='tuck';S.container='box';S.dieFaces=im.faces;S.w=clamp(Math.round(q.w*k-pad),5,1500);S.d=clamp(Math.round(q.d*k-pad),5,1500);S.h=clamp(Math.round(Hmm-pad),5,1500);S.leaflet=0;
+      dieMsg=' 펼친 도면 사진이라, 도면 비율로 상자 크기를 맞추고 면마다 사진 그림을 입혔어요.';}}
   if(FXL[r.fx])S.fx=r.fx;
-  if(['tuck','hanger','mailer','drawer','lidbase','rsc','tent','handle'].includes(r.box_type)&&!(S.leaflet&&!['tuck','hanger'].includes(r.box_type)))S.boxType=r.box_type;
-  aiStatus(`<b>${esc(ai.product||'제품')}</b>(으)로 봤어요. 크기·용기·스타일을 맞춰 ${toDieline?'<b>도면</b>을 만들었어요. 비슷한 시안은 레퍼런스 탭에 있어요.':'두고 레퍼런스를 만들었어요.'}`);
+  if(!S.dieFaces&&['tuck','hanger','mailer','drawer','lidbase','rsc','tent','handle'].includes(r.box_type)&&!(S.leaflet&&!['tuck','hanger'].includes(r.box_type)))S.boxType=r.box_type;
+  aiStatus(`<b>${esc(ai.product||'제품')}</b>(으)로 봤어요.${dieMsg} 크기·용기·스타일을 맞춰 ${toDieline?'<b>도면</b>을 만들었어요. 비슷한 시안은 레퍼런스 탭에 있어요.':'두고 레퍼런스를 만들었어요.'}`);
   rebuild();refreshGallery(true);showTab(toDieline?'pdl':'pref');
 }
 
@@ -2487,7 +2526,7 @@ document.addEventListener('paste',e=>{const t=e.target;if(t&&(t.tagName==='TEXTA
 $('#aiBtn').onclick=runAI;
 $('#rec').addEventListener('change',e=>{const k=e.target.dataset&&e.target.dataset.k;if(!k||!current)return;const v=parseFloat(e.target.value);if(!(v>0)){renderRec(current.spec,current.P);return;}const off=current.spec.outer[k]-current.spec.prod[k];S[k]=clamp(v-off,5,1500);rebuild();});
 $('#rec').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.k)e.target.blur();});
-$('#photoRm').onclick=()=>{G.photoBlob=null;G.photoURL=null;G.photoColors=[];G.ai=null;$('#photoPrev').hidden=true;$('#dropEmpty').hidden=false;$('#photoAct').hidden=true;aiStatus('');renderContUI(current&&current.P);if(G.started)renderHead();};
+$('#photoRm').onclick=()=>{if(S.dieFaces){S.dieFaces=null;rebuild();}G.photoBlob=null;G.photoURL=null;G.photoColors=[];G.ai=null;$('#photoPrev').hidden=true;$('#dropEmpty').hidden=false;$('#photoAct').hidden=true;aiStatus('');renderContUI(current&&current.P);if(G.started)renderHead();};
 $('#conts').addEventListener('click',e=>{const b=e.target.closest('.ct');if(!b)return;S.container=b.dataset.v;S.material=S.finish=S.closure=null;rebuild();});
 $('#mat').addEventListener('change',e=>{S.material=e.target.value;S.finish=null;rebuild();});
 $('#fin').addEventListener('change',e=>{S.finish=e.target.value;rebuild();});

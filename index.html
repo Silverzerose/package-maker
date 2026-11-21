@@ -356,6 +356,7 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
         <button data-v="drawer">서랍형</button>
         <button data-v="lidbase">천지함</button>
         <button data-v="rsc">택배박스</button>
+        <button data-v="tent">삼각 리본</button>
       </div>
       <div class="field" style="margin-top:12px"><label>상자 재질·두께</label><select id="board"></select></div>
       <div class="hint" id="boardHint"></div>
@@ -372,6 +373,8 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
       <div class="pals" id="pals"></div>
       <div class="sub">패턴</div>
       <select id="pattern"></select>
+      <div class="sub">앞면 레이아웃</div>
+      <select id="layoutSel"><option value="auto">자동 (가운데 정렬)</option><option value="classic">가운데 정렬</option><option value="minimal">미니멀 (브랜드만, 여백 크게)</option><option value="giant">큰 글자 (브랜드를 크게 잘라 넣기)</option><option value="band">컬러 띠</option><option value="editorial">에디토리얼 (왼쪽 정렬)</option></select>
       <div class="grid2">
         <div class="field"><label>후가공 (브랜드·제품명)</label><select id="fxSel"><option value="none">없음</option><option value="gold">금박</option><option value="silver">은박</option><option value="rose">로즈골드박</option><option value="emboss">형압 (엠보싱)</option><option value="spotuv">부분 UV (유광)</option></select></div>
         <div class="field"><label>코팅</label><select id="coatSel"><option value="matte">무광 코팅</option><option value="gloss">유광 코팅</option><option value="soft">소프트터치 (벨벳)</option></select></div>
@@ -566,7 +569,7 @@ const PRESETS=[
 ];
 const SANS='"Noto Sans KR", sans-serif', SERIF='"Noto Serif KR", serif', DISP='"Black Han Sans", "Noto Sans KR", sans-serif';
 const STY={
-  minimal:{label:'미니멀',head:s=>`700 ${s}px ${SANS}`,brand:s=>`500 ${s}px ${SANS}`,body:s=>`400 ${s}px ${SANS}`,sp:.42,pats:['arcs','lines','blocks'],
+  minimal:{label:'미니멀',head:s=>`700 ${s}px ${SANS}`,brand:s=>`500 ${s}px ${SANS}`,body:s=>`400 ${s}px ${SANS}`,sp:.42,pats:['arcs','lines','blocks','splatter'],
     pals:[{bg:'#F3EEE8',ink:'#2A2826',acc:'#C7A487'},{bg:'#E6EDF0',ink:'#1E2A31',acc:'#86A9B8'},{bg:'#F5E4E0',ink:'#3B2B2A',acc:'#D68C84'},{bg:'#FFFFFF',ink:'#141414',acc:'#BDBDBD'}]},
   vivid:{label:'비비드',head:s=>`400 ${s}px ${DISP}`,brand:s=>`900 ${s}px ${SANS}`,body:s=>`500 ${s}px ${SANS}`,sp:.16,pats:['dots','waves','confetti','stripes'],
     pals:[{bg:'#FF5A36',ink:'#FFF4E0',acc:'#FFC93C'},{bg:'#2D5BD1',ink:'#FFFFFF',acc:'#FFB703'},{bg:'#00A57A',ink:'#FFFCEF',acc:'#FF6B4A'},{bg:'#FFCB2B',ink:'#1F1B16',acc:'#FF4F79'}]},
@@ -579,9 +582,10 @@ const STY={
   tech:{label:'테크',head:s=>`900 ${s}px ${SANS}`,brand:s=>`700 ${s}px ${SANS}`,body:s=>`400 ${s}px ${SANS}`,sp:.36,pats:['grid','circuit','rings'],
     pals:[{bg:'#0E1116',ink:'#FFFFFF',acc:'#39D3FF'},{bg:'#F1F3F6',ink:'#0B0D12',acc:'#5B5BFF'},{bg:'#17171E',ink:'#F4F4F6',acc:'#B8FF3C'}]}
 };
-const PAT={arcs:'아크 라인',lines:'가는 줄무늬',blocks:'컬러 블록',dots:'도트',waves:'웨이브',confetti:'컨페티',stripes:'사선 스트라이프',stamp:'스탬프',grid:'그리드',deco:'아르데코',diamonds:'다이아 격자',leaves:'잎사귀',blobs:'유기적 도형',circuit:'회로',rings:'동심원',none:'패턴 없음'};
-const BUSY=new Set(['dots','confetti','stripes','leaves','blobs','stamp','circuit','waves']);
-const TYPES={tuck:{label:'리버스 턱엔드 박스',en:'Reverse Tuck End'},hanger:{label:'걸이형 턱엔드 박스',en:'Hang Tab Tuck End'},drawer:{label:'서랍형 박스 (슬리브+트레이)',en:'Sleeve & Tray Box'},lidbase:{label:'천지함 (뚜껑+바닥)',en:'Lid & Base Rigid Box'},mailer:{label:'메일러 박스',en:'Mailer Box'},rsc:{label:'택배 박스 (RSC)',en:'Regular Slotted Carton'}};
+const PAT={arcs:'아크 라인',lines:'가는 줄무늬',blocks:'컬러 블록',dots:'도트',waves:'웨이브',confetti:'컨페티',stripes:'사선 스트라이프',stamp:'스탬프',grid:'그리드',deco:'아르데코',diamonds:'다이아 격자',leaves:'잎사귀',blobs:'유기적 도형',circuit:'회로',rings:'동심원',splatter:'잉크 스플래터',none:'패턴 없음'};
+const BUSY=new Set(['dots','confetti','stripes','leaves','blobs','stamp','circuit','waves','splatter']);
+const TYPES={tuck:{label:'리버스 턱엔드 박스',en:'Reverse Tuck End'},hanger:{label:'걸이형 턱엔드 박스',en:'Hang Tab Tuck End'},drawer:{label:'서랍형 박스 (슬리브+트레이)',en:'Sleeve & Tray Box'},lidbase:{label:'천지함 (뚜껑+바닥)',en:'Lid & Base Rigid Box'},mailer:{label:'메일러 박스',en:'Mailer Box'},rsc:{label:'택배 박스 (RSC)',en:'Regular Slotted Carton'},tent:{label:'삼각 텐트 리본 박스',en:'Triangle Tent Box with Ribbon'}};
+const LAYOUTS={classic:'가운데 정렬',minimal:'미니멀',giant:'큰 글자',band:'컬러 띠',editorial:'에디토리얼'};
 const MATS={
   tuck:{t:.5,name:'아이보리 판지 350g',short:'IV 350g',inner:'#F1EDE4',kraft:false},
   mailer:{t:1.5,name:'E골 골판지 (약 1.5mm)',short:'E골 골판지',inner:'#C9A47C',kraft:true},
@@ -620,7 +624,7 @@ const UNIT={mm:1,cm:10,in:25.4};
 const BGS=[{a:'#F7F5F1',b:'#E8E4DC'},{a:'#EEF1F4',b:'#D9DEE4'},{a:'#F4EEE6',b:'#E2D4C2'},{a:'#E9F1EC',b:'#CFE0D5'},{a:'#2A2A2E',b:'#121214'}];
 
 /* ---------------- state ---------------- */
-const S={exp:{on:false,descEn:'',pao:'12M',bestBefore:'',multi:'',langs:[],nameEn:'',netNum:'',netUnit:'mL',dir:'',warn:'',ingr:'',ingrKo:'',mfr:'',mfrAddr:'',usrp:'',usrpAddr:'',web:'',madeKr:true,ukrp:'',ukrpAddr:'',eurp:'',eurpAddr:''},sheetImg:null,sheetPlain:true,customPal:null,leaflet:0,leafText:'',foldMode:false,fx:'none',coat:'matte',insideColor:'',scene:'plain',board:null,volume:'',en:'',desc:'',barcode:'',fontHead:'auto',fontBody:'auto',faceImg:{},container:'auto',material:null,finish:null,closure:null,contColor:null,unit:'mm',w:40,d:40,h:125,cat:'beauty',brand:CATS.beauty.brand,name:CATS.beauty.name,tag:'',boxType:'auto',style:'auto',palIdx:null,pattern:'auto',customColor:null,clearance:2,seed:7,logo:null,showProduct:true,bg:0};
+const S={exp:{on:false,descEn:'',pao:'12M',bestBefore:'',multi:'',langs:[],nameEn:'',netNum:'',netUnit:'mL',dir:'',warn:'',ingr:'',ingrKo:'',mfr:'',mfrAddr:'',usrp:'',usrpAddr:'',web:'',madeKr:true,ukrp:'',ukrpAddr:'',eurp:'',eurpAddr:''},sheetImg:null,sheetPlain:true,customPal:null,leaflet:0,leafText:'',foldMode:false,fx:'none',coat:'matte',insideColor:'',scene:'wood',board:null,volume:'',en:'',desc:'',barcode:'',fontHead:'auto',fontBody:'auto',faceImg:{},container:'auto',material:null,finish:null,closure:null,contColor:null,unit:'mm',w:40,d:40,h:125,cat:'beauty',brand:CATS.beauty.brand,name:CATS.beauty.name,tag:'',boxType:'auto',style:'auto',palIdx:null,pattern:'auto',layout:'auto',customColor:null,clearance:2,seed:7,logo:null,showProduct:true,bg:0};
 const edited={brand:false,name:false};
 
 /* ---------------- spec ---------------- */
@@ -664,7 +668,8 @@ function resolveDesign(spec,st){st=st||S;
   const S2=Object.assign({},sty),fh=FONTS[st.fontHead],fb=FONTS[st.fontBody];
   if(fh){S2.head=s=>`${fh.w.head} ${s}px "${fh.fam}", ${SANS}`;S2.brand=s=>`${fh.w.brand} ${s}px "${fh.fam}", ${SANS}`;}
   if(fb){S2.body=s=>`${fb.w.body} ${s}px "${fb.fam}", ${SANS}`;}
-  return {exp:E,style,st:S2,pal,palIdx,pattern,text,logo:st.logo,faceImg:st.faceImg||{},fx:st.fx||'none',barcode:eanNormalize(st.barcode),seedBase:st.seed*131+hash(style+pattern)};
+  const layout=LAYOUTS[st.layout]?st.layout:'classic';
+  return {exp:E,style,st:S2,pal,palIdx,pattern,layout,text,logo:st.logo,faceImg:st.faceImg||{},fx:st.fx||'none',barcode:eanNormalize(st.barcode),seedBase:st.seed*131+hash(style+pattern)};
 }
 
 /* ---------------- canvas helpers ---------------- */
@@ -700,6 +705,11 @@ function paintPattern(ctx,Wp,Hp,P,k,rng,withBg){
     case 'leaves':{const n=Math.min(320,area/600),cols=[acc,mix(acc,ink,.35),mix(acc,bg,.38)];ctx.lineWidth=.25*k;for(let i=0;i<n;i++){leaf(ctx,rng()*Wp,rng()*Hp,(8+rng()*12)*k,rng()*Math.PI*2,cols[Math.floor(rng()*3)],rgba(bg,.55));}break;}
     case 'blobs':{const n=clamp(Math.round(area/3800),3,46),cols=[acc,mix(acc,bg,.45),mix(acc,ink,.2)];for(let i=0;i<n;i++){const cx=rng()*Wp,cy=rng()*Hp,R=(9+rng()*20)*k,m=9,pts=[];for(let j=0;j<m;j++){const a=j/m*Math.PI*2,rr2=R*(.7+rng()*.5);pts.push([cx+Math.cos(a)*rr2,cy+Math.sin(a)*rr2]);}ctx.beginPath();for(let j=0;j<=m;j++){const p=pts[j%m],q=pts[(j+1)%m],mx=(p[0]+q[0])/2,my=(p[1]+q[1])/2;if(j===0)ctx.moveTo(mx,my);else ctx.quadraticCurveTo(p[0],p[1],mx,my);}ctx.closePath();ctx.fillStyle=rgba(cols[i%3],.9);ctx.fill();}break;}
     case 'circuit':{const n=Math.min(140,area/450),g=2.5*k;ctx.strokeStyle=rgba(acc,.5);ctx.fillStyle=rgba(acc,.7);ctx.lineWidth=.42*k;for(let i=0;i<n;i++){let x=Math.round(rng()*Wp/g)*g,y=Math.round(rng()*Hp/g)*g;ctx.beginPath();ctx.moveTo(x,y);let h=rng()<.5;const segs=3+Math.floor(rng()*4);for(let s=0;s<segs;s++){const L=Math.round((2+rng()*6))*g*(rng()<.5?-1:1);if(h)x+=L;else y+=L;h=!h;ctx.lineTo(x,y);}ctx.stroke();ctx.beginPath();ctx.arc(x,y,1.1*k,0,Math.PI*2);ctx.fill();}break;}
+    case 'splatter':{// ink splatter: dense blots in a few clusters, fading into fine droplets (like hand-printed gift wrap)
+      const col=P.style==='luxury'?acc:ink,nc=clamp(Math.round(area/2600),2,40);ctx.fillStyle=col;
+      for(let c=0;c<nc;c++){const cx=rng()*Wp,cy=rng()*Hp,R=(10+rng()*22)*k,n=Math.round(70+rng()*90);
+        for(let i=0;i<n;i++){const a=rng()*Math.PI*2,d=Math.pow(rng(),1.7)*R,r=(.25+Math.pow(rng(),3)*3.2)*k*(1-d/R*.6);ctx.beginPath();ctx.ellipse(cx+Math.cos(a)*d,cy+Math.sin(a)*d,r,r*(.55+rng()*.45),rng()*Math.PI,0,Math.PI*2);ctx.fill();}}
+      const nd=Math.min(2600,area/30);for(let i=0;i<nd;i++){ctx.globalAlpha=.55+rng()*.45;ctx.beginPath();ctx.arc(rng()*Wp,rng()*Hp,(.12+rng()*.4)*k,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;break;}
     case 'rings':{const n=Math.max(2,Math.round(Wp/(k*70)));ctx.lineWidth=.35*k;for(let i=0;i<n;i++){const cx=rng()*Wp,cy=rng()*Hp,mr=(30+rng()*40)*k;for(let r=6*k;r<mr;r+=3.5*k){ctx.strokeStyle=rgba(acc,.32*(1-r/mr));ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();}}break;}
   }
   ctx.restore();
@@ -725,6 +735,7 @@ Comp.prototype.text=function(name,o){
 Comp.prototype.flat=function(){if(!this.layered)return this.canvas;const x=this.canvas.getContext('2d');x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,this.w,this.h);for(const L of this.layers){x.globalAlpha=L.opacity;x.drawImage(L.canvas,0,0);}x.globalAlpha=1;return this.canvas;};
 
 function drawHero(c,Wp,Hp,P,k){
+  if(P.layout&&P.layout!=='classic'&&HERO_LAYOUTS[P.layout])return HERO_LAYOUTS[P.layout](c,Wp,Hp,P,k);
   if(P.style==='tech') return heroTech(c,Wp,Hp,P,k);
   const ctx=MC,st=P.st,pal=P.pal,T=P.text,mn=Math.min(Wp,Hp),m=mn*.085,busy=BUSY.has(P.pattern);
   let kind='none',fill=null,txt=pal.ink,txt2=pal.ink;
@@ -764,6 +775,53 @@ function drawHero(c,Wp,Hp,P,k){
   if(tagH){y+=gap*.7+tg.size*1.05;c.text('한 줄 소개',{lines:tg.lines,x:Wp/2,y,lh:tg.size*1.45,font:st.body(tg.size),size:tg.size,color:txt2,alpha:.9,align:'center'});y+=tg.size*.4+(tg.lines.length-1)*tg.size*1.45;}
   y+=gap*.9;c.text('영문 라벨',{lines:[T.vol?T.en+'  ·  '+T.vol:T.en],x:Wp/2,y:y+enS*.85,font:st.brand(enS),size:enS,color:txt,alpha:.72,align:'center',sp:enS*.32});
 }
+// Alternative front layouts, modelled on common real-world packaging approaches.
+const HERO_LAYOUTS={
+  // Quiet luxury: plain front, brand only with wide tracking, a small descriptor underneath (pattern stays on the sides).
+  minimal(c,Wp,Hp,P,k){
+    const ctx=MC,st=P.st,pal=P.pal,T=P.text,mn=Math.min(Wp,Hp),txt=P.style==='luxury'?pal.acc:pal.ink;
+    let x=c.ctx('배경색 (앞면)');x.fillStyle=pal.bg;x.fillRect(0,0,Wp,Hp);
+    if(P.logo){x=c.ctx('로고');let lh=mn*.14,lw=lh*P.logo.width/P.logo.height;if(lw>Wp*.5){lw=Wp*.5;lh=lw*P.logo.height/P.logo.width;}x.drawImage(P.logo,Wp/2-lw/2,Hp*.44-lh-mn*.06,lw,lh);}
+    const bS=fitSpaced(ctx,T.brand.toUpperCase(),s=>`400 ${s}px ${SANS}`,.32,Wp*.56,Math.min(mn*.13,16*k),1.4*k);
+    c.text('브랜드명',{lines:[T.brand.toUpperCase()],x:Wp/2,y:Hp*.47,font:`400 ${bS}px ${SANS}`,size:bS,color:txt,align:'center',sp:bS*.32});
+    const sS=clamp(bS*.2,1*k,2.6*k),sub=(T.en||T.name).toUpperCase();
+    c.text('영문 라벨',{lines:[sub],x:Wp/2+bS*.9,y:Hp*.47+sS*2.6,font:`500 ${sS}px ${SANS}`,size:sS,color:txt,align:'center',sp:sS*.3});
+    const nS=clamp(mn*.035,1.2*k,3.2*k);c.text('제품명',{lines:[T.name],x:Wp/2,y:Hp-mn*.1,font:st.body(nS),size:nS,color:txt,alpha:.7,align:'center'});
+  },
+  // Oversized brand letters cropped by the edges, product name small in a corner.
+  giant(c,Wp,Hp,P,k){
+    const ctx=MC,st=P.st,pal=P.pal,T=P.text,mn=Math.min(Wp,Hp),m=mn*.08,vert=Hp>Wp*1.3,word=T.brand.toUpperCase();
+    const L=vert?Hp:Wp;let s=L*.5;ctx.font=st.head(s);while(ctx.measureText(word).width>L*1.18&&s>4*k){s*=.94;ctx.font=st.head(s);}
+    c.text('브랜드명',{lines:[word],x:0,y:s*.36,tx:vert?Wp*.56:Wp/2,ty:vert?Hp/2:Hp*.42,rot:vert?-Math.PI/2:0,font:st.head(s),size:s,color:pal.acc,alpha:.9,align:'center'});
+    const nm=wrapFit(ctx,T.name,st.head,Wp-2*m,Math.min(Wp*.12,Hp*.08,18*k),1.6*k,2),tS=clamp(nm.size*.42,1.2*k,3.6*k);
+    let y=Hp-m-(T.tag?tS*1.6:0);
+    c.text('제품명',{lines:nm.lines,x:m,y:y-(nm.lines.length-1)*nm.size*1.08,lh:nm.size*1.08,font:st.head(nm.size),size:nm.size,color:pal.ink,align:'left'});
+    if(T.tag)c.text('한 줄 소개',{lines:[ellipsize((ctx.font=st.body(tS),ctx),T.tag,Wp-2*m)],x:m,y:Hp-m,font:st.body(tS),size:tS,color:pal.ink,alpha:.8,align:'left'});
+  },
+  // A full-bleed colour band across the face carrying the product name.
+  band(c,Wp,Hp,P,k){
+    const ctx=MC,st=P.st,pal=P.pal,T=P.text,mn=Math.min(Wp,Hp),m=mn*.09,bandC=lum(pal.acc)<.5||Math.abs(lum(pal.acc)-lum(pal.bg))>.25?pal.acc:pal.ink,on=lum(bandC)>.45?'#1C1B19':'#FFFFFF';
+    const nm=wrapFit(ctx,T.name,st.head,Wp-2*m,Math.min(Wp*.16,Hp*.11,30*k),1.6*k,2),bh=nm.lines.length*nm.size*1.15+nm.size*1.3,by=Hp*.56-bh/2;
+    let x=c.ctx('컬러 띠');x.fillStyle=bandC;x.fillRect(0,by,Wp,bh);
+    c.text('제품명',{lines:nm.lines,x:Wp/2,y:by+nm.size*1.5,lh:nm.size*1.15,font:st.head(nm.size),size:nm.size,color:on,align:'center'});
+    const bS=fitSpaced(ctx,T.brand,st.brand,st.sp,Wp-2*m,clamp(mn*.06,1.6*k,6*k),1.1*k);
+    c.text('브랜드명',{lines:[T.brand],x:Wp/2,y:m+bS,font:st.brand(bS),size:bS,color:pal.ink,align:'center',sp:bS*st.sp});
+    if(T.tag){const tg=wrapFit(ctx,T.tag,st.body,Wp-2*m,clamp(nm.size*.32,1.3*k,4*k),1.1*k,2);c.text('한 줄 소개',{lines:tg.lines,x:Wp/2,y:by+bh+tg.size*2,lh:tg.size*1.45,font:st.body(tg.size),size:tg.size,color:pal.ink,alpha:.85,align:'center'});}
+    const eS=clamp(mn*.03,1*k,2.8*k);c.text('영문 라벨',{lines:[T.vol?T.en+'  ·  '+T.vol:T.en],x:Wp/2,y:Hp-m,font:st.brand(eS),size:eS,color:pal.ink,alpha:.7,align:'center',sp:eS*.3});
+  },
+  // Editorial: left aligned, large name at the top, a thin rule and details at the foot.
+  editorial(c,Wp,Hp,P,k){
+    const ctx=MC,st=P.st,pal=P.pal,T=P.text,mn=Math.min(Wp,Hp),m=mn*.1,w=Wp-2*m,txt=P.style==='luxury'?pal.acc:pal.ink;
+    let x=c.ctx('바탕 패널',.92);x.fillStyle=pal.bg;x.fillRect(0,0,Wp,Hp*.62);
+    const bS=fitSpaced(ctx,T.brand,st.brand,st.sp,w,clamp(mn*.05,1.4*k,5*k),1*k);
+    c.text('브랜드명',{lines:[T.brand],x:m,y:m+bS,font:st.brand(bS),size:bS,color:txt,align:'left',sp:bS*st.sp});
+    const nm=wrapFit(ctx,T.name,st.head,w*.94,Math.min(Wp*.17,Hp*.12,32*k),1.6*k,3),y0=m+bS*2.4+nm.size;
+    c.text('제품명',{lines:nm.lines,x:m,y:y0,lh:nm.size*1.02,font:st.head(nm.size),size:nm.size,color:txt,align:'left'});
+    if(T.tag){const tg=wrapFit(ctx,T.tag,st.body,w*.85,clamp(nm.size*.28,1.2*k,3.8*k),1*k,2);c.text('한 줄 소개',{lines:tg.lines,x:m,y:y0+(nm.lines.length-1)*nm.size*1.02+tg.size*2.2,lh:tg.size*1.45,font:st.body(tg.size),size:tg.size,color:txt,alpha:.8,align:'left'});}
+    x=c.ctx('구분선');x.fillStyle=txt;x.fillRect(m,Hp-m-mn*.07,w,Math.max(.3*k,1));
+    const eS=clamp(mn*.032,1*k,2.8*k);c.text('영문 라벨',{lines:[T.vol?T.en+'  ·  '+T.vol:T.en],x:m,y:Hp-m,font:st.brand(eS),size:eS,color:txt,align:'left',sp:eS*.25});
+  }
+};
 function heroTech(c,Wp,Hp,P,k){
   const ctx=MC,st=P.st,pal=P.pal,T=P.text,mn=Math.min(Wp,Hp),m=mn*.09,innerW=Wp-2*m;
   const bS=fitSpaced(ctx,T.brand,st.brand,st.sp,innerW*.7,clamp(mn*.05,1.8*k,5.5*k),1.1*k);
@@ -970,7 +1028,8 @@ function drawFaces(spec,P,opt){
   const {w:W,d:D,h:H}=spec.outer;
   const k=opt.k||clamp(Math.min(4096/(2*W+2*D),2048/H,2048/D,2048/W,9),1.2,9);P.k=k;
   const px=v=>Math.max(2,Math.round(v*k));
-  const strip=makeCanvas(px(2*W+2*D),px(H));
+  const tent=spec.type==='tent',SL=tent?Math.hypot(D/2,H):H;
+  const strip=makeCanvas(px(2*W+2*D),px(Math.max(H,SL)));
   paintPattern(strip.getContext('2d'),strip.width,strip.height,P,k,mulberry(P.seedBase+1),false);
   const pat=(seed,w,h)=>{const cv=makeCanvas(px(w),px(h));paintPattern(cv.getContext('2d'),cv.width,cv.height,P,k,mulberry(P.seedBase+seed),false);return cv;};
   const base=(key,w,h,src,sx)=>{const c=new Comp(px(w),px(h),layered);const b=c.ctx('배경색');b.fillStyle=P.pal.bg;b.fillRect(0,0,c.w,c.h);
@@ -978,13 +1037,16 @@ function drawFaces(spec,P,opt){
     if(ph){const x=c.ctx('사진');if(ph.__exact)x.drawImage(ph,0,0,c.w,c.h);else{const s=Math.max(c.w/ph.width,c.h/ph.height),iw=ph.width*s,ih=ph.height*s;x.drawImage(ph,(c.w-iw)/2,(c.h-ih)/2,iw,ih);}}
     else if(P.pattern!=='none'||P.style==='kraft'){const p=c.ctx('패턴');if(sx==null)p.drawImage(src,0,0);else p.drawImage(src,Math.round(sx*k),0,c.w,c.h,0,0,c.w,c.h);}return c;};
   const topHero=['mailer','drawer','lidbase'].includes(spec.type);
-  const C={front:base('front',W,H,strip,0),right:base('right',D,H,strip,W),back:base('back',W,H,strip,W+D),left:base('left',D,H,strip,2*W+D),top:base('top',W,D,pat(2,W,D)),bottom:base('bottom',W,D,pat(3,W,D))};
+  const C={front:base('front',W,SL,strip,0),right:base('right',D,H,strip,W),back:base('back',W,SL,strip,W+D),left:base('left',D,H,strip,2*W+D),top:base('top',W,D,pat(2,W,D)),bottom:base('bottom',W,D,pat(3,W,D))};
+  if(tent&&P.pattern==='none'&&P.style!=='kraft'){// triangle ends carry the pattern even when the slopes are plain
+    const sp=Object.assign({},P,{pattern:'splatter'});for(const key of['left','right']){const cv=makeCanvas(px(D),px(H));paintPattern(cv.getContext('2d'),cv.width,cv.height,sp,k,mulberry(P.seedBase+9),false);C[key].ctx('패턴').drawImage(cv,0,0);}}
   if(spec.type==='lidbase'){C.lidFront=base('lidFront',W+2*spec.mat.t,spec.lidH,pat(5,W,spec.lidH));C.lidSide=base('lidSide',D+2*spec.mat.t,spec.lidH,pat(6,D,spec.lidH));}
   for(const key in C)C[key].fx=P.fx&&P.fx!=='none';
   const d=(name,fn,...a)=>fn(C[name],C[name].w,C[name].h,P,k,...a);
   if(P.plain){}else{
   if(spec.type==='lidbase'){d('lidFront',drawSide,'brand');d('lidSide',drawSide,'name');}
-  if(topHero){d('top',drawHero);d('front',drawSide,'brand');d('back',drawSide,'name');d('left',drawSide,'name');d('right',drawSide,'brand');if(P.exp)d('bottom',drawExportBack,spec,true);else d('bottom',drawInfo,spec);}
+  if(tent){d('front',drawHero);if(P.exp)d('back',drawExportBack,spec,false);else d('back',drawInfo,spec);d('bottom',drawBottom,spec);d('top',drawTop);}
+  else if(topHero){d('top',drawHero);d('front',drawSide,'brand');d('back',drawSide,'name');d('left',drawSide,'name');d('right',drawSide,'brand');if(P.exp)d('bottom',drawExportBack,spec,true);else d('bottom',drawInfo,spec);}
   else{d('front',drawHero);if(P.exp){d('back',drawExportBack,spec,false);d('right',drawExportSide,spec);}else{d('back',drawInfo,spec);d('right',drawSide,'name');}d('left',drawSide,'brand');d('top',drawTop);d('bottom',drawBottom,spec);}
   }
   const F={};for(const key in C){F[key]=C[key].flat();if(C[key].mask){F['mask_'+key]=C[key].mask;if(P.fx==='emboss'){const b=makeCanvas(C[key].w,C[key].h),bx=b.getContext('2d');try{bx.filter=`blur(${Math.max(1,k*.35)}px)`;}catch(e){}bx.drawImage(C[key].mask,0,0);F['bump_'+key]=b;}}}
@@ -1089,9 +1151,9 @@ function buildRig(grp,parts,W,D,H,panel,face,flatMat,inMat,variant){
     Rg.rsc=true;
   }else{
   Rg.top=hg(Rg.back,0,H,0);pf(Rg.top,'top',W,D,W/2,D/2,Math.PI);
-  Rg.tuck=hg(Rg.top,0,D-.002,0);pl(Rg.tuck,W*.97,T,W/2,T/2);
+  Rg.tuck=hg(Rg.top,0,D-.004,0);pl(Rg.tuck,W*.97,T,W/2,T/2);
   Rg.bot=hg(Rg.root,0,0,0);pf(Rg.bot,'bottom',W,D,0,-D/2);
-  Rg.btuck=hg(Rg.bot,0,-D+.002,0);pl(Rg.btuck,W*.97,T,0,-T/2);
+  Rg.btuck=hg(Rg.bot,0,-D+.004,0);pl(Rg.btuck,W*.97,T,0,-T/2);
   Rg.dRt=hg(Rg.right,0,H,0);pl(Rg.dRt,D*.94,DF,D/2,DF/2);Rg.dRb=hg(Rg.right,0,0,0);pl(Rg.dRb,D*.94,DF,D/2,-DF/2);
   Rg.dLt=hg(Rg.left,0,H,0);pl(Rg.dLt,D*.94,DF,D/2,DF/2);Rg.dLb=hg(Rg.left,0,0,0);pl(Rg.dLb,D*.94,DF,D/2,-DF/2);
   }
@@ -1126,8 +1188,14 @@ function applyFold(u,Rg){
   R3.foldStand=stand;
   Rg.right.rotation.y=H2*sm(.14,.26);Rg.back.rotation.y=H2*sm(.22,.34);Rg.glue.rotation.y=-H2*sm(.3,.38);Rg.left.rotation.y=H2*sm(.34,.46);
   if(Rg.rsc){Rg.flaps.forEach(fp=>{const a=fp.top?(fp.minor?sm(.78,.86):sm(.86,.98)):(fp.minor?sm(.46,.53):sm(.52,.62));fp.g.rotation.x=(fp.top?-1:1)*H2*a;});return;}
-  Rg.dRb.rotation.x=H2*sm(.46,.52);Rg.dLb.rotation.x=H2*sm(.47,.53);Rg.bot.rotation.x=H2*sm(.52,.58);Rg.btuck.rotation.x=H2*sm(.56,.62);
-  Rg.dRt.rotation.x=-H2*sm(.78,.85);Rg.dLt.rotation.x=-H2*sm(.8,.87);Rg.top.rotation.x=-H2*sm(.86,.95);Rg.tuck.rotation.x=-H2*sm(.92,1);
+  // Dust flaps fold a little past 90° so they sit just under the lid instead of in the same plane (no flicker).
+  // The tuck tongues are pre-bent and then kept pointing straight into the box while the lid swings,
+  // so they never sweep through the opposite wall; at the end they lean slightly inward.
+  const OV=1.05,dk=.05,PI=Math.PI;
+  Rg.dRb.rotation.x=H2*OV*sm(.46,.52);Rg.dLb.rotation.x=H2*OV*sm(.47,.53);
+  const ab=H2*sm(.53,.61);Rg.bot.rotation.x=ab;Rg.btuck.rotation.x=sm(.5,.55)*Math.min(PI*.9,PI-ab)+dk*sm(.59,.62);
+  Rg.dRt.rotation.x=-H2*OV*sm(.78,.85);Rg.dLt.rotation.x=-H2*OV*sm(.8,.86);
+  const at=-H2*sm(.87,.97);Rg.top.rotation.x=at;Rg.tuck.rotation.x=sm(.84,.89)*Math.max(-PI*.9,-PI-at)-dk*sm(.95,1);
 }
 function applyLeaf(u,L){if(!L)return;const sm=(a,b)=>{const x=clamp((u-a)/(b-a),0,1);return x*x*(3-2*x);};
   // 1) pull the folded stack straight up out of the open box, 2) carry it to the table beside the box, 3) let the accordion relax flat
@@ -1145,6 +1213,7 @@ function applyOpen(v,p,show){
   if(p.type==='drawer'){p.tray.position.z=v*p.trayD*.72;}
   else if(p.type==='lidbase'){p.lid.position.y=p.H+.0006+v*p.H*1.05;p.lid.position.z=-v*p.D*.22;p.lid.rotation.x=-v*.3;}
   else if(p.type==='hanger'){p.hingeA.rotation.x=v*1.95;p.flap.rotation.x=-v*.18;const dv=clamp((v-.25)/.6,0,1),e=dv*dv*(3-2*dv);p.dustL.rotation.z=e*.42;p.dustR.rotation.z=-e*.42;}
+  else if(p.type==='tent'){p.hingeA.rotation.x=v*1.3;p.ribbon.forEach(r=>r.visible=v<.04);}
   else if(p.type==='rsc'){p.hingeA.rotation.x=v*2.05;p.hingeB.rotation.x=-v*2.05;p.dustL.rotation.z=late*.42;p.dustR.rotation.z=-late*.42;}
   else{p.hingeA.rotation.x=-v*1.95;if(p.flap)p.flap.rotation.x=p.type==='mailer'?v*.55:v*.18;if(p.ears){const ev=clamp(v/.5,0,1);p.ears[0].rotation.z=ev*.35;p.ears[1].rotation.z=-ev*.35;}if(p.dustL){const dv=clamp((v-.25)/.6,0,1),e=dv*dv*(3-2*dv);p.dustL.rotation.z=e*.42;p.dustR.rotation.z=-e*.42;}}
   if(p.prodOut)p.prodOut.visible=!!show;
@@ -1309,7 +1378,32 @@ function buildScene(T,spec,P,F,st){
   const dust=(fw,len,mat)=>{const L=new THREE.Group();L.position.set(-W/2,H-.002,0);grp.add(L);panel(L,fw,len,mat,inMat,o=>{o.rotation.x=-Math.PI/2;o.position.x=fw/2;});
     const R=new THREE.Group();R.position.set(W/2,H-.002,0);grp.add(R);panel(R,fw,len,mat,inMat,o=>{o.rotation.x=-Math.PI/2;o.position.x=-fw/2;});parts.dustL=L;parts.dustR=R;};
   let prodParent=grp,prodY=t+.0006;
-  if(st.foldMode){if(['mailer','lidbase','drawer'].includes(spec.type))buildRigCross(grp,parts,W,D,H,panel,face,flatMat,inMat,spec.type);else buildRig(grp,parts,W,D,H,panel,face,flatMat,inMat,spec.type);}
+  if(st.foldMode&&spec.type!=='tent'){if(['mailer','lidbase','drawer'].includes(spec.type))buildRigCross(grp,parts,W,D,H,panel,face,flatMat,inMat,spec.type);else buildRig(grp,parts,W,D,H,panel,face,flatMat,inMat,spec.type);}
+  else if(spec.type==='tent'){
+    // triangular prism: base, two slopes meeting at the ridge, triangle ends, satin ribbon bow through the ridge.
+    const SL=Math.hypot(D/2,H),al=Math.atan2(D/2,H);
+    face(grp,'bottom',W,D,o=>{o.position.set(0,.0008,0);o.rotation.x=Math.PI/2;});
+    const tri=(key,sx)=>{const sh=new THREE.Shape();sh.moveTo(-D/2,0);sh.lineTo(D/2,0);sh.lineTo(0,H);sh.closePath();const geo=keep(new THREE.ShapeGeometry(sh));
+      const pa=geo.attributes.position,uv=[];for(let i=0;i<pa.count;i++)uv.push((pa.getX(i)+D/2)/D,pa.getY(i)/H);geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+      const g=new THREE.Group();g.position.set(sx*W/2,0,0);g.rotation.y=sx*Math.PI/2;grp.add(g);
+      const a=new THREE.Mesh(geo,om(tex(F[key])));a.castShadow=a.receiveShadow=true;const b=new THREE.Mesh(geo,inMat);b.receiveShadow=true;g.add(a,b);};
+    tri('right',1);tri('left',-1);
+    const hf=new THREE.Group();hf.position.set(0,0,D/2);grp.add(hf);const tf=new THREE.Group();tf.rotation.x=-al;hf.add(tf);
+    face(tf,'front',W,SL,o=>o.position.set(0,SL/2,0));
+    const hb=new THREE.Group();hb.position.set(0,0,-D/2);hb.rotation.y=Math.PI;grp.add(hb);const tb=new THREE.Group();tb.rotation.x=-al;hb.add(tb);
+    face(tb,'back',W,SL,o=>o.position.set(0,SL/2,0));
+    const rc=lum(P.pal.bg)>.45?(lum(P.pal.ink)<.35?P.pal.ink:'#141414'):(lum(P.pal.acc)>.5?P.pal.acc:'#F4EFE6');
+    const rm=keep(new THREE.MeshStandardMaterial({color:new THREE.Color(rc),roughness:.32,metalness:.15,side:THREE.DoubleSide}));
+    const rw=clamp(Math.min(W,SL)*.045,.004,.02),bow=new THREE.Group();bow.position.set(0,H+rw*.15,0);grp.add(bow);
+    const lr=clamp(Math.min(W*.13,SL*.16),.012,.08);
+    // loops are flat satin bands (open cylinders squashed into an oval), tails hang a short way down the front slope
+    for(const sx of[-1,1]){const loop=new THREE.Mesh(keep(new THREE.CylinderGeometry(lr,lr,rw,40,1,true)),rm);loop.rotation.x=Math.PI/2;loop.scale.set(1,1,.58);
+      const lg=new THREE.Group();lg.position.set(sx*lr*.9,lr*.38,0);lg.rotation.z=sx*.32;lg.rotation.y=sx*.35;lg.add(loop);loop.castShadow=true;bow.add(lg);}
+    const knot=new THREE.Mesh(keep(new THREE.BoxGeometry(rw*1.15,rw*1.05,rw*.9)),rm);knot.position.set(0,rw*.25,rw*.15);bow.add(knot);
+    const tails=new THREE.Group();tails.position.set(0,SL-rw*.4,.0012);tf.add(tails);const tl=Math.min(SL*.34,lr*3.2);
+    for(const sx of[-1,1]){const tg=keep(new THREE.PlaneGeometry(rw,tl));tg.translate(0,-tl/2,0);const t=new THREE.Mesh(tg,rm);t.rotation.z=sx*.2;t.castShadow=true;tails.add(t);}
+    parts.hingeA=hf;parts.al=al;parts.ribbon=[bow,tails];
+  }
   else if(spec.type==='drawer'){
     face(grp,'top',W,D,o=>{o.position.set(0,H,0);o.rotation.x=-Math.PI/2;});
     face(grp,'bottom',W,D,o=>{o.position.set(0,.0008,0);o.rotation.x=Math.PI/2;});
@@ -1468,6 +1562,22 @@ function buildDieline(spec,P,F,geoOnly){
     fold(xF,yb,xF+W,yb);fold(xF,yb+D,xF+W,yb+D);fold(xR,yb,xR+D,yb);fold(xL,yb,xL+D,yb);
     if(spec.leaflet){for(let i=0;i<spec.leaflet;i++){add(R(xB,yb+i*H,W,H),'#FFFFFF',IMG('leaf'+i,xB,yb+i*H,W,H));fold(xB,yb+i*H,xB+W,yb+i*H);}}
     band={x:xF,y:y0,w:2*W+2*D,h:H};TW=xE;TH=Math.max(yb+D+T,yb+(spec.leaflet||0)*H);
+  }else if(type==='tent'){
+    // back slope (ridge at top) / base / front slope (ridge at bottom) in one column; triangle ends hang off the base,
+    // glue tabs on the slope ends, one ribbon hole per slope just below the ridge.
+    const SL=Math.hypot(D/2,H),g=clamp(D*.22,7,14),x0=H,yB=SL,yF=SL+D;
+    add(R(x0,0,W,SL),bg,IMG('back',x0,0,W,SL));
+    add(R(x0,yB,W,D),bg,IMG('bottom',x0,yB,W,D,180));
+    add(R(x0,yF,W,SL),bg,IMG('front',x0,yF,W,SL,180));
+    add([[x0,yB],[x0-H,yB+D/2],[x0,yF]],bg,IMG('left',x0-H,yB,H,D,-90));
+    add([[x0+W,yB],[x0+W+H,yB+D/2],[x0+W,yF]],bg,IMG('right',x0+W,yB,H,D,90));
+    for(const[y1,y2]of[[0,SL],[yF,yF+SL]]){const t=Math.min(g*.6,(y2-y1)*.2);
+      add([[x0,y1],[x0-g,y1+t],[x0-g,y2-t],[x0,y2]],inn);add([[x0+W,y1],[x0+W+g,y1+t],[x0+W+g,y2-t],[x0+W,y2]],inn);
+      fold(x0,y1,x0,y2);fold(x0+W,y1,x0+W,y2);}
+    fold(x0,yB,x0+W,yB);fold(x0,yF,x0+W,yF);fold(x0,yB,x0,yF);fold(x0+W,yB,x0+W,yF);
+    const hole=(cx,cy)=>{const r=clamp(Math.min(W,D)*.035,1.6,3),cp=[];for(let i=0;i<20;i++){const a=i/20*Math.PI*2;cp.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r]);}holes.push(cp);};
+    const hd=clamp(SL*.1,6,14);hole(x0+W/2,hd);hole(x0+W/2,yF+SL-hd);
+    band={x:x0,y:0,w:W,h:2*SL+D};TW=x0+W+H;TH=2*SL+D;
   }else if(type==='drawer'){
     const G=clamp(D*.12,10,20),gap=15,t=spec.mat.t;
     add(R(0,0,H,D),bg,IMG('left',0,0,H,D,-90));add(R(H,0,W,D),bg,IMG('top',H,0,W,D));add(R(H+W,0,H,D),bg,IMG('right',H+W,0,H,D,90));add(R(2*H+W,0,W,D),bg,IMG('bottom',2*H+W,0,W,D,180));
@@ -1582,7 +1692,7 @@ function renderControls(P){
     `<label class="cpick${S.customColor?' on':''}" title="직접 고르기" ${S.customColor?`style="background:${S.customColor}"`:''}>${S.customColor?'':'+'}<input type="color" id="cIn" value="${S.customColor||P.pal.bg}"></label>`;
   const sel=$('#pattern');
   sel.innerHTML=`<option value="auto">자동 (${PAT[P.pattern]})</option>`+Object.keys(PAT).map(k=>`<option value="${k}">${PAT[k]}${st.pats.includes(k)?' ★':''}</option>`).join('');
-  sel.value=S.pattern;
+  sel.value=S.pattern;$('#layoutSel').value=LAYOUTS[S.layout]?S.layout:'auto';
   $$('#types button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.boxType));
   $$('#cats .chip').forEach(b=>b.classList.toggle('on',b.dataset.v===S.cat));
   const set=(id,v)=>{const el=$(id);if(document.activeElement!==el)el.value=v;};
@@ -1706,8 +1816,8 @@ const BOARDS={
   rigid20:{kind:'rigid',t:2,name:'합지 2mm (그레이보드+인쇄지)',short:'합지 2mm',inner:'#EDE9E2',kraft:false,desc:'천지함의 표준 두께예요. 선물·프리미엄 제품에 써요.'},
   rigid25:{kind:'rigid',t:2.5,name:'합지 2.5mm (그레이보드+인쇄지)',short:'합지 2.5mm',inner:'#EDE9E2',kraft:false,desc:'아주 단단해서 무거운 선물 세트도 버텨요.'}
 };
-const BOARD_FOR={hanger:['iv300','iv350','iv400','sc350','art300','kraft300'],drawer:['rigid15','rigid20','iv400','sc400'],lidbase:['rigid15','rigid20','rigid25'],tuck:['iv250','iv300','iv350','iv400','sc300','sc350','sc400','art300','kraft300'],mailer:['fflute','eflute','bflute'],rsc:['eflute','bflute','aflute','ebflute']};
-const BOARD_DEF={hanger:'iv350',drawer:'rigid15',lidbase:'rigid20',tuck:'iv350',mailer:'eflute',rsc:'bflute'};
+const BOARD_FOR={hanger:['iv300','iv350','iv400','sc350','art300','kraft300'],drawer:['rigid15','rigid20','iv400','sc400'],lidbase:['rigid15','rigid20','rigid25'],tuck:['iv250','iv300','iv350','iv400','sc300','sc350','sc400','art300','kraft300'],mailer:['fflute','eflute','bflute'],rsc:['eflute','bflute','aflute','ebflute'],tent:['iv300','iv350','iv400','sc350','art300','kraft300']};
+const BOARD_DEF={hanger:'iv350',drawer:'rigid15',lidbase:'rigid20',tuck:'iv350',mailer:'eflute',rsc:'bflute',tent:'iv400'};
 const STOCK=[
   {n:'립밤 스틱 4.5g',cat:'beauty',c:['lipbalm','pp','gloss','twist'],d:[18,18,68],vol:'4.5g'},
   {n:'립스틱 케이스 3.5g',cat:'beauty',c:['lipbalm','abs','gloss','twist'],d:[22,22,85],vol:'3.5g'},
@@ -1788,7 +1898,8 @@ const AI_PROMPT=`너는 화장품·식품·생활용품 패키지 디자이너�
  "styles": ["minimal|vivid|kraft|luxury|natural|tech 중 어울리는 순서로 2~4개"],
  "palette": {"bg": "#RRGGBB", "ink": "#RRGGBB", "accent": "#RRGGBB"},
  "pattern": "none|lines|blocks|dots|waves|stripes|grid|leaves|blobs|arcs|deco",
- "box_type": "tuck|hanger|mailer|drawer|lidbase|rsc 중 이 제품에 맞는 상자. 사진 속 상자가 보이면 그 모양",
+ "box_type": "tuck|hanger|mailer|drawer|lidbase|rsc|tent 중 이 제품에 맞는 상자. 사진 속 상자가 보이면 그 모양. tent는 두 면이 위에서 만나는 삼각기둥(텐트) 모양 상자로, 보통 꼭대기에 리본을 묶어요",
+ "layout": "classic|minimal|giant|band|editorial 중 사진 속 앞면 배치와 가장 비슷한 것. minimal은 여백 많고 브랜드만 작게 있는 앞면",
  "leaflet": 0,
  "leaflet_text": "설명서에 들어갈 사용 방법·주의사항을 줄바꿈으로 구분해 3~6줄",
  "summary": "사진에서 본 것과 추천 방향을 한두 문장으로"
@@ -1828,7 +1939,8 @@ function applyAI(r,toDieline){
   if(PAT[r.pattern])S.pattern=r.pattern;
   const lf=+r.leaflet;if(lf>=2&&lf<=4){S.leaflet=lf;if(!['tuck','hanger'].includes(S.boxType))S.boxType='tuck';}
   if(r.leaflet_text)S.leafText=String(r.leaflet_text).slice(0,400);
-  if(['tuck','hanger','mailer','drawer','lidbase','rsc'].includes(r.box_type)&&!(S.leaflet&&!['tuck','hanger'].includes(r.box_type)))S.boxType=r.box_type;
+  if(LAYOUTS[r.layout])S.layout=r.layout;
+  if(['tuck','hanger','mailer','drawer','lidbase','rsc','tent'].includes(r.box_type)&&!(S.leaflet&&!['tuck','hanger'].includes(r.box_type)))S.boxType=r.box_type;
   aiStatus(`<b>${esc(ai.product||'제품')}</b>(으)로 봤어요. 크기·용기·스타일을 맞춰 ${toDieline?'<b>도면</b>을 만들었어요. 비슷한 시안은 레퍼런스 탭에 있어요.':'두고 레퍼런스를 만들었어요.'}`);
   rebuild();refreshGallery(true);showTab(toDieline?'pdl':'pref');
 }
@@ -1842,7 +1954,7 @@ function getThumbStage(){
   return TH;
 }
 function bgTex(i){if(bgTexCache[i])return bgTexCache[i];const g=BGS[i],c=makeCanvas(4,256),x=c.getContext('2d'),gr=x.createLinearGradient(0,0,0,256);gr.addColorStop(0,g.a);gr.addColorStop(1,g.b);x.fillStyle=gr;x.fillRect(0,0,4,256);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return bgTexCache[i]=t;}
-function conceptState(c){return Object.assign({},S,{foldMode:false,customPal:c.customPal||null,style:c.style,palIdx:c.palIdx,customColor:c.customColor,pattern:c.pattern,boxType:c.boxType,seed:c.seed,container:c.container,material:c.material,finish:c.finish,closure:c.closure,contColor:c.contColor,showProduct:true});}
+function conceptState(c){return Object.assign({},S,{foldMode:false,customPal:c.customPal||null,style:c.style,palIdx:c.palIdx,customColor:c.customColor,pattern:c.pattern,layout:c.layout||'classic',boxType:c.boxType,seed:c.seed,container:c.container,material:c.material,finish:c.finish,closure:c.closure,contColor:c.contColor,showProduct:true});}
 async function renderThumb(c){
   const T=getThumbStage();if(!T)return null;
   const st=conceptState(c),spec=computeSpec(st),P=resolveDesign(spec,st);
@@ -1881,13 +1993,16 @@ function genConcepts(n,around){
     let cont=around&&rng()<.65?[around.container,around.material,around.finish,around.closure]:pick(conts);
     if(!around&&i<conts.length)cont=conts[i];
     const big=Math.max(S.w,S.d,S.h)>150;
-    const boxType=around&&rng()<.6?around.boxType:(rng()<.68?'auto':pick(big?['tuck','mailer','rsc']:['tuck','mailer']));
-    out.push({id:uid(),style,palIdx,customColor,customPal,pattern,boxType,seed:Math.floor(rng()*1e9),container:cont[0],material:cont[1],finish:cont[2],closure:cont[3],contColor:null,
+    // mix real-world carton types instead of mostly the auto pick, and vary the front layout too
+    const kinds=big?['tuck','mailer','rsc','lidbase','drawer']:['tuck','hanger','mailer','drawer','lidbase','tent'];
+    const boxType=around&&rng()<.6?around.boxType:(i===0?'auto':kinds[(i+Math.floor(rng()*kinds.length))%kinds.length]);
+    const layout=around&&rng()<.5?(around.layout||'classic'):pick(['classic','minimal','giant','band','editorial','classic']);
+    out.push({id:uid(),style,palIdx,customColor,customPal,pattern,layout,boxType,seed:Math.floor(rng()*1e9),container:cont[0],material:cont[1],finish:cont[2],closure:cont[3],contColor:null,
       bg:pick([0,0,1,2,3,2,4]),theta:.3+rng()*.75,phi:.98+rng()*.28,open:rng()<.28?.72:0,aspect:pick([1.25,1,1.35,.82,1.15,1.45]),thumb:null});
   }
   return out;
 }
-function cardTitle(c){const t=STY[c.style].label,p=PAT[c.pattern];return `${t} · ${p}`;}
+function cardTitle(c){const t=STY[c.style].label,p=PAT[c.pattern],l=LAYOUTS[c.layout||'classic'];return `${t} · ${l} · ${p}`;}
 function cardTags(c){const m=c.meta||{};const ct=CONT[c.container]||CONT.box;return [m.type?TYPES[m.type].label.replace(/ \(.+\)/,''):'',c.container!=='box'?ct.label:'',c.container!=='box'?MATL[c.material]+' '+FIN[c.finish].replace(/ \(.+\)/,''):''].filter(Boolean);}
 function cardHTML(c){
   if(c.mine)return `<div class="pin mine" data-id="${c.id}" data-style="mine" data-cont="mine">
@@ -1945,7 +2060,7 @@ async function pump(){
 }
 function findConcept(id){return G.concepts.find(c=>c.id===id)||G.saved.find(c=>c.id===id);}
 function applyConcept(c){
-  Object.assign(S,{customPal:c.customPal||null,style:c.style,palIdx:c.palIdx,customColor:c.customColor,pattern:c.pattern,boxType:c.boxType,seed:c.seed,container:c.container,material:c.material,finish:c.finish,closure:c.closure,contColor:c.contColor,bg:c.bg});
+  Object.assign(S,{customPal:c.customPal||null,style:c.style,palIdx:c.palIdx,customColor:c.customColor,pattern:c.pattern,layout:c.layout||'classic',boxType:c.boxType,seed:c.seed,container:c.container,material:c.material,finish:c.finish,closure:c.closure,contColor:c.contColor,bg:c.bg});
   const g=BGS[S.bg];$('#p3d').style.background=`linear-gradient(${g.a},${g.b})`;$$('#bgs button').forEach((x,i)=>x.classList.toggle('on',i===S.bg));
   if(R3.orbit){R3.viewTo={theta:c.theta,phi:c.phi};R3.openTarget=c.open;$('#openR').value=c.open;$('#openB').textContent=c.open>.5?'박스 닫기':'박스 열기';}
   rebuild();showTab('p3d');toast('이 레퍼런스로 바꿨어요. 왼쪽에서 더 다듬어 보세요');
@@ -2082,7 +2197,7 @@ $('#modal').addEventListener('click',e=>{if(e.target.id==='modal')$('#modal').cl
 
 $('#presets').innerHTML=PRESETS.map((p,i)=>`<button class="chip" data-i="${i}">${p.n}<em>${p.w}×${p.d}×${p.h}</em></button>`).join('');
 $('#cats').innerHTML=Object.keys(CATS).map(k=>`<button class="chip" data-v="${k}">${CATS[k].label}</button>`).join('');
-$('#bgs').innerHTML=`<select id="sceneSel" title="장면">${Object.keys(SCENES).map(k=>`<option value="${k}">${SCENES[k].label}</option>`).join('')}</select>`+BGS.map((b,i)=>`<button data-i="${i}" class="${i===0?'on':''}" style="background:linear-gradient(${b.a},${b.b})"></button>`).join('');
+$('#bgs').innerHTML=`<select id="sceneSel" title="장면">${Object.keys(SCENES).map(k=>`<option value="${k}">${SCENES[k].label}</option>`).join('')}</select>`+BGS.map((b,i)=>`<button data-i="${i}" class="${S.scene==='plain'&&i===0?'on':''}" style="background:linear-gradient(${b.a},${b.b})"></button>`).join('');$('#sceneSel').value=S.scene;
 
 function setCat(k){S.cat=k;if(!edited.brand)S.brand=CATS[k].brand;if(!edited.name)S.name=CATS[k].name;S.palIdx=null;S.customColor=null;}
 $('#presets').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const p=PRESETS[+b.dataset.i];S.w=p.w;S.d=p.d;S.h=p.h;setCat(p.cat);S.container='auto';S.material=S.finish=S.closure=null;rebuild();});
@@ -2098,6 +2213,7 @@ $('#styles').addEventListener('click',e=>{const b=e.target.closest('.st');if(!b)
 $('#pals').addEventListener('click',e=>{const b=e.target.closest('.pal');if(!b)return;if(b.dataset.photo){S.customPal=photoPal(G.photoColors)||S.customPal;S.customColor=null;rebuild();return;}S.palIdx=+b.dataset.i;S.customColor=null;S.customPal=null;rebuild();});
 $('#pals').addEventListener('input',e=>{if(e.target.id==='cIn'){S.customColor=e.target.value;S.customPal=null;schedule();}});
 $('#pattern').addEventListener('change',e=>{S.pattern=e.target.value;rebuild();});
+$('#layoutSel').addEventListener('change',e=>{S.layout=e.target.value;rebuild();});
 const reroll=()=>{S.seed=(S.seed*48271+11)%2147483647;S.palIdx=null;S.customColor=null;S.pattern='auto';rebuild();};
 $('#reroll').onclick=reroll;$('#hdReroll').onclick=reroll;
 $('#logoIn').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{const img=new Image();img.onload=()=>{S.logo=img;$('#logoLbl').textContent=f.name.length>22?f.name.slice(0,20)+'…':f.name;$('#logoRm').style.display='';rebuild();};img.src=rd.result;};rd.readAsDataURL(f);e.target.value='';});
@@ -2373,7 +2489,7 @@ $('#bgs').addEventListener('change',e=>{if(e.target.id==='sceneSel'){S.scene=e.t
 
 
 function setFold(on){S.foldMode=on;$('#foldB').classList.toggle('on',on);$('#foldB').textContent=on?'접기 모션 끄기':'접기 모션';$('#foldPlay').hidden=!on;$('#openLbl').textContent=on?'펼치기':'열기';$('#openB').hidden=on;R3.sizeKey=null;R3.open=R3.openTarget=on?1:0;$('#openR').value=R3.open;if(on)R3.viewTo={theta:R3.orbit.tt==null?R3.orbit.theta:R3.orbit.tt,phi:.72};else R3.viewTo={theta:R3.orbit.tt==null?R3.orbit.theta:R3.orbit.tt,phi:1.12};rebuild();if(on)setTimeout(()=>{R3.foldPlay={t0:performance.now()+500,dur:4200};},350);}
-$('#foldB').onclick=()=>setFold(!S.foldMode);
+$('#foldB').onclick=()=>{if(!S.foldMode&&current&&current.spec.type==='tent'){toast('삼각 리본 박스는 접기 모션이 아직 없어요. 박스 열기로 리본을 풀어 볼 수 있어요');return;}setFold(!S.foldMode);};
 $('#foldPlay').onclick=()=>{R3.open=1;R3.foldPlay={t0:performance.now(),dur:3600};};
 
 

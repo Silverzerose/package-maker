@@ -147,6 +147,9 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
 .legend{position:absolute;left:14px;top:14px;flex-wrap:wrap;max-width:calc(100% - 28px);display:flex;gap:14px;align-items:center;background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:12px}
 .legend i{display:inline-block;width:22px;height:0;border-top:2px solid #111;vertical-align:middle;margin-right:6px}
 .legend i.f{border-top:2px dashed #E5484D}
+.sheetCtl{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:12.5px}
+.sheetCtl[hidden]{display:none!important}.sheetCtl input{width:120px;accent-color:var(--accent)}.sheetCtl b{min-width:38px;font-size:12px}
+#dl.canmove svg{cursor:grab;user-select:none;touch-action:none}#dl.moving svg{cursor:grabbing}
 .dlbtns{position:absolute;left:14px;right:14px;bottom:14px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 #pcom{background:var(--bg);border:0}
 .comwrap{position:absolute;inset:0;overflow:auto;padding:4px 2px 40px}
@@ -536,6 +539,7 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
       <div class="fmenu" id="fmenu" hidden></div>
       <div class="dlbtns">
         <label class="btn primary" for="sheetIn" id="sheetLbl">전체 디자인 이미지 넣기</label><input type="file" id="sheetIn" accept="image/*" hidden>
+        <span class="sheetCtl" id="sheetCtl" hidden><label for="sheetScale">크기</label><input type="range" id="sheetScale" min="30" max="300" step="1" value="100"><b id="sheetScaleV">100%</b><button class="btn sm" id="sheetReset">처음대로</button></span>
         <button class="btn" id="sheetOpt" hidden>자동 글자 보이기</button><button class="btn" id="sheetRm" hidden>전체 이미지 빼기</button>
         <button class="btn" id="dlCopy">SVG 코드 복사</button>
         <button class="btn" id="dlPng">도면 이미지</button>
@@ -665,7 +669,7 @@ const UNIT={mm:1,cm:10,in:25.4};
 const BGS=[{a:'#F7F5F1',b:'#E8E4DC'},{a:'#EEF1F4',b:'#D9DEE4'},{a:'#F4EEE6',b:'#E2D4C2'},{a:'#E9F1EC',b:'#CFE0D5'},{a:'#2A2A2E',b:'#121214'}];
 
 /* ---------------- state ---------------- */
-const S={exp:{on:false,descEn:'',pao:'12M',bestBefore:'',multi:'',langs:[],nameEn:'',netNum:'',netUnit:'mL',dir:'',warn:'',ingr:'',ingrKo:'',mfr:'',mfrAddr:'',usrp:'',usrpAddr:'',web:'',madeKr:true,ukrp:'',ukrpAddr:'',eurp:'',eurpAddr:''},sheetImg:null,sheetPlain:true,customPal:null,leaflet:0,leafText:'',foldMode:false,fx:'none',coat:'matte',insideColor:'',scene:'wood',board:null,volume:'',en:'',desc:'',barcode:'',fontHead:'auto',fontBody:'auto',faceImg:{},container:'auto',material:null,finish:null,closure:null,contColor:null,unit:'mm',w:40,d:40,h:125,cat:'beauty',brand:CATS.beauty.brand,name:CATS.beauty.name,tag:'',boxType:'auto',style:'auto',palIdx:null,pattern:'auto',layout:'auto',customColor:null,clearance:2,seed:7,logo:null,showProduct:true,bg:0};
+const S={exp:{on:false,descEn:'',pao:'12M',bestBefore:'',multi:'',langs:[],nameEn:'',netNum:'',netUnit:'mL',dir:'',warn:'',ingr:'',ingrKo:'',mfr:'',mfrAddr:'',usrp:'',usrpAddr:'',web:'',madeKr:true,ukrp:'',ukrpAddr:'',eurp:'',eurpAddr:''},sheetImg:null,sheetPlain:true,customPal:null,leaflet:0,leafText:'',sheetT:{s:1,x:0,y:0},foldMode:false,fx:'none',coat:'matte',insideColor:'',scene:'wood',board:null,volume:'',en:'',desc:'',barcode:'',fontHead:'auto',fontBody:'auto',faceImg:{},container:'auto',material:null,finish:null,closure:null,contColor:null,unit:'mm',w:40,d:40,h:125,cat:'beauty',brand:CATS.beauty.brand,name:CATS.beauty.name,tag:'',boxType:'auto',style:'auto',palIdx:null,pattern:'auto',layout:'auto',customColor:null,clearance:2,seed:7,logo:null,showProduct:true,bg:0};
 const edited={brand:false,name:false};
 
 /* ---------------- spec ---------------- */
@@ -1056,7 +1060,9 @@ function drawThanks(c,Wp,Hp,P,k,spec){
 }
 const LEAF_DEF={beauty:['세안 후 토너로 피부결을 정돈해 주세요.','적당량을 덜어 얼굴 전체에 부드럽게 펴 발라 주세요.','가볍게 두드려 흡수시켜 주세요.','상처가 있는 부위에는 사용하지 마세요.','이상이 있으면 사용을 멈추고 전문의와 상담하세요.','직사광선을 피해 서늘한 곳에 보관하세요.'],food:['개봉 후 바로 드세요.','남은 제품은 밀봉해 서늘한 곳에 보관하세요.','알레르기 성분: 밀, 우유, 계란','유통기한은 바닥면에 표시돼 있어요.'],tech:['처음 사용 전 2시간 충전해 주세요.','전원 버튼을 3초 눌러 켜 주세요.','블루투스 목록에서 기기를 선택하세요.','물이나 높은 온도에 두지 마세요.'],apparel:['찬물에 단독 손세탁하세요.','표백제를 쓰지 마세요.','그늘에서 뉘어 말려 주세요.','낮은 온도로 다림질하세요.'],gift:['받는 분께 전하는 메시지를 적어 주세요.','제품은 서늘한 곳에 보관하세요.','교환·환불은 구매처에 문의하세요.'],living:['처음 사용 시 2시간 이상 켜 두세요.','심지를 5mm로 다듬어 사용하세요.','불을 켠 채 자리를 비우지 마세요.','어린이 손이 닿지 않는 곳에 두세요.']};
 function leafLines(P){const t=(S.leafText||'').split('\n').map(x=>x.trim()).filter(Boolean);return t.length?t:(LEAF_DEF[S.cat]||LEAF_DEF.beauty);}
-function sheetMap(geo,img){const b=geo.band,k=Math.min(img.width/b.w,img.height/b.h);return{k,px:X=>(X-b.x-b.w/2)*k+img.width/2,py:Y=>(Y-b.y-b.h/2)*k+img.height/2,x0:b.x+b.w/2-img.width/(2*k),y0:b.y+b.h/2-img.height/(2*k),w:img.width/k,h:img.height/k};}
+// The full-sheet design starts out covering the whole dieline; S.sheetT lets the person scale it (s) and move it (x, y in mm).
+function sheetMap(geo,img){const T=S.sheetT||{s:1,x:0,y:0},b={x:0,y:0,w:geo.TW||geo.band.w,h:geo.TH||geo.band.h},k=Math.min(img.width/b.w,img.height/b.h)/T.s,cx=b.x+b.w/2+T.x,cy=b.y+b.h/2+T.y;
+  return{k,px:X=>(X-cx)*k+img.width/2,py:Y=>(Y-cy)*k+img.height/2,x0:cx-img.width/(2*k),y0:cy-img.height/(2*k),w:img.width/k,h:img.height/k};}
 function sheetFaces(geo,img,spec){
   const out={},M=sheetMap(geo,img),sx=M.k,sy=M.k,halves={};
   for(const p of geo.pieces){if(!p.img)continue;let {key,x,y,w,h,rot}=p.img;if(key==='tab'||/^leaf/.test(key))continue;if(out[key]&&!/^top(Front|Back)$/.test(key))continue;
@@ -2423,7 +2429,7 @@ $('#fmenu').addEventListener('click',e=>{const b=e.target.closest('button');if(!
   $('#faceIn').dataset.all=a==='all'?'1':'';$('#faceIn').click();});
 document.addEventListener('click',e=>{if(!e.target.closest('#fmenu')&&!e.target.closest('.hits'))$('#fmenu').hidden=true;});
 $('#faceIn').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(!f||!faceKey)return;
-  if(e.target.dataset.all){const url=URL.createObjectURL(f);loadImg(url).then(img=>{const sc=Math.min(1,3000/Math.max(img.width,img.height));const c=makeCanvas(img.width*sc,img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);S.sheetImg=c;S.sheetPlain=true;S.faceImg={};URL.revokeObjectURL(url);$('#sheetRm').hidden=false;$('#sheetOpt').hidden=false;$('#sheetOpt').textContent='자동 글자 보이기';rebuild();toast('사진 한 장으로 박스 전체를 감쌌어요. 접으면 면끼리 이어져요');});}
+  if(e.target.dataset.all){const url=URL.createObjectURL(f);loadImg(url).then(img=>{const sc=Math.min(1,3000/Math.max(img.width,img.height));const c=makeCanvas(img.width*sc,img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);S.sheetImg=c;S.sheetPlain=true;S.sheetT={s:1,x:0,y:0};S.faceImg={};URL.revokeObjectURL(url);syncSheetCtl();$('#sheetRm').hidden=false;$('#sheetOpt').hidden=false;$('#sheetOpt').textContent='자동 글자 보이기';rebuild();toast('사진 한 장으로 박스 전체를 감쌌어요. 접으면 면끼리 이어져요');});}
   else loadFaceImg(faceKey,f);});
 $('#dl').addEventListener('dragover',e=>{if(e.target.closest('.hits polygon'))e.preventDefault();});
 $('#dl').addEventListener('drop',e=>{const h=e.target.closest('.hits polygon');if(!h)return;e.preventDefault();const f=e.dataTransfer&&e.dataTransfer.files[0];if(f)loadFaceImg(h.dataset.key,f);});
@@ -2601,11 +2607,26 @@ $('#photoFront').onclick=()=>{if(!G.photoURL)return;loadImg(G.photoURL).then(img
 
 
 $('#sheetIn').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const url=URL.createObjectURL(f);
-  loadImg(url).then(img=>{const sc=Math.min(1,6000/Math.max(img.width,img.height));const c=makeCanvas(img.width*sc,img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);S.sheetImg=c;S.sheetPlain=true;URL.revokeObjectURL(url);
+  loadImg(url).then(img=>{const sc=Math.min(1,6000/Math.max(img.width,img.height));const c=makeCanvas(img.width*sc,img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);S.sheetImg=c;S.sheetPlain=true;S.sheetT={s:1,x:0,y:0};URL.revokeObjectURL(url);syncSheetCtl();
     const g=current&&current.spec.geo;const ar=g?g.TW/g.TH:1,ir=c.width/c.height;
     $('#sheetRm').hidden=false;$('#sheetOpt').hidden=false;$('#sheetOpt').textContent='자동 글자 보이기';rebuild();
-    toast(Math.abs(ar-ir)/ar>.08?`넣었어요. 이미지 비율(${r1(ir)})이 도면(${r1(ar)})과 달라 늘어나 보일 수 있어요. "PDF 저장"으로 받은 칼선 위에 디자인하면 딱 맞아요`:'도면 전체에 디자인을 입혔어요');}).catch(()=>toast('이미지를 읽지 못했어요'));});
-$('#sheetRm').onclick=()=>{S.sheetImg=null;$('#sheetRm').hidden=true;$('#sheetOpt').hidden=true;rebuild();};
+    toast(Math.abs(ar-ir)/ar>.08?`넣었어요. 이미지 비율(${r1(ir)})이 도면(${r1(ar)})과 달라 늘어나 보일 수 있어요. "PDF 저장"으로 받은 칼선 위에 디자인하면 딱 맞아요`:'도면 전체에 디자인을 입혔어요. 도면 위를 끌어서 옮기고, 아래 \'크기\'로 키울 수 있어요');}).catch(()=>toast('이미지를 읽지 못했어요'));});
+$('#sheetRm').onclick=()=>{S.sheetImg=null;$('#sheetRm').hidden=true;$('#sheetOpt').hidden=true;syncSheetCtl();rebuild();};
+// --- full-sheet design: resize with the slider, drag it on the dieline to move it ---
+function syncSheetCtl(){$('#sheetCtl').hidden=!S.sheetImg;const v=Math.round((S.sheetT||{s:1}).s*100);$('#sheetScale').value=v;$('#sheetScaleV').textContent=v+'%';$('#dl').classList.toggle('canmove',!!S.sheetImg);}
+const sheetRebuild=debounce(()=>rebuild(),140);
+$('#sheetScale').addEventListener('input',e=>{S.sheetT.s=+e.target.value/100;$('#sheetScaleV').textContent=e.target.value+'%';sheetGhost(true);sheetRebuild();});
+$('#sheetReset').onclick=()=>{S.sheetT={s:1,x:0,y:0};syncSheetCtl();rebuild();};
+function sheetGhost(show){const svg=$('#dl svg');if(!svg||!S.sheetImg||!current||!current.spec.geo)return null;let g=svg.querySelector('#sheetGhost');
+  if(!g){g=document.createElementNS('http://www.w3.org/2000/svg','image');g.id='sheetGhost';g.setAttribute('href',S.sheetImg.toDataURL('image/jpeg',.6));g.setAttribute('preserveAspectRatio','none');g.style.pointerEvents='none';g.setAttribute('opacity','.55');svg.appendChild(g);}
+  const m=sheetMap(current.spec.geo,S.sheetImg);g.setAttribute('x',m.x0);g.setAttribute('y',m.y0);g.setAttribute('width',m.w);g.setAttribute('height',m.h);g.style.display=show?'':'none';return g;}
+const SD={on:false,moved:false};
+$('#dl').addEventListener('pointerdown',e=>{const svg=$('#dl svg');if(!S.sheetImg||!svg||e.button!==0)return;const M=svg.getScreenCTM();if(!M)return;
+  SD.on=true;SD.moved=false;SD.inv=M.inverse();SD.p0=new DOMPoint(e.clientX,e.clientY).matrixTransform(SD.inv);SD.t0={x:S.sheetT.x,y:S.sheetT.y};SD.id=e.pointerId;});
+window.addEventListener('pointermove',e=>{if(!SD.on||e.pointerId!==SD.id)return;const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(SD.inv),dx=p.x-SD.p0.x,dy=p.y-SD.p0.y;
+  if(!SD.moved&&Math.hypot(dx,dy)<2)return;if(!SD.moved){SD.moved=true;$('#dl').classList.add('moving');}S.sheetT.x=SD.t0.x+dx;S.sheetT.y=SD.t0.y+dy;sheetGhost(true);});
+window.addEventListener('pointerup',e=>{if(!SD.on||e.pointerId!==SD.id)return;SD.on=false;$('#dl').classList.remove('moving');if(SD.moved){SD.block=true;setTimeout(()=>SD.block=false,50);rebuild();}});
+$('#dl').addEventListener('click',e=>{if(SD.block){e.stopPropagation();e.preventDefault();}},true);
 $('#sheetOpt').onclick=e=>{S.sheetPlain=!S.sheetPlain;e.currentTarget.textContent=S.sheetPlain?'자동 글자 보이기':'자동 글자 숨기기';rebuild();};
 
 

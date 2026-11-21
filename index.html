@@ -108,6 +108,8 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
 .fprev b{display:block;font-size:20px}.fprev span{font-size:12.5px;color:#4a4742}
 #barHint.ok{color:#1F7A4D}#barHint.warn{color:#B4541B}
 .hits polygon{fill:transparent;cursor:pointer;stroke:transparent;stroke-width:1.2}
+.flaps polygon{fill:rgba(238,90,47,.12);stroke:#EE5A2F;stroke-width:.8;stroke-dasharray:2 1.5;cursor:grab}.flaps polygon:hover{fill:rgba(238,90,47,.25)}.flaps polygon.sel{fill:rgba(238,90,47,.38);stroke-width:1.4;stroke-dasharray:none}
+.edges line{stroke:transparent;stroke-width:6;stroke-linecap:round;cursor:pointer}.edges.on line{stroke:rgba(31,122,77,.55)}.edges.on line:hover,.edges line.near{stroke:#1F7A4D;stroke-width:8}
 .hits polygon:hover{fill:rgba(238,90,47,.14);stroke:#EE5A2F}
 .lg-tip{color:var(--accent);font-weight:700}
 .fmenu{position:absolute;z-index:6;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.14);padding:6px;display:flex;flex-direction:column;min-width:170px}
@@ -541,6 +543,7 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
         <label class="btn primary" for="sheetIn" id="sheetLbl">전체 디자인 이미지 넣기</label><input type="file" id="sheetIn" accept="image/*" hidden>
         <span class="sheetCtl" id="sheetCtl" hidden><label for="sheetScale">크기</label><input type="range" id="sheetScale" min="30" max="300" step="1" value="100"><b id="sheetScaleV">100%</b><button class="btn sm" id="sheetReset">처음대로</button></span>
         <button class="btn" id="sheetOpt" hidden>자동 글자 보이기</button><button class="btn" id="sheetRm" hidden>전체 이미지 빼기</button>
+        <button class="btn" id="flapB">날개 편집</button><button class="btn" id="flapReset" hidden>날개 원래대로</button>
         <button class="btn" id="dlCopy">SVG 코드 복사</button>
         <button class="btn" id="dlPng">도면 이미지</button>
         <button class="btn" id="dlPdf">PDF 저장</button>
@@ -1609,7 +1612,44 @@ function updateDims(){
 
 /* ---------------- dieline ---------------- */
 let lastSVG='';
-function buildDieline(spec,P,F,geoOnly){
+/* ---------------- dieline flap editing: detach a flap and attach it to another panel edge ---------------- */
+const isFacePiece=p=>p.img&&!['tab','handle'].includes(p.img.key)&&!/^leaf/.test(p.img.key);
+const isFlapPiece=p=>!p.img&&p.fill!=='#FFFFFF';
+const segOn=(p,a,b,e)=>{e=e||.05;const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1;if(Math.abs(dx*(p[1]-a[1])-dy*(p[0]-a[0]))/L>e)return false;const t=((p[0]-a[0])*dx+(p[1]-a[1])*dy)/(L*L);return t>-.001&&t<1.001;};
+const edgesOf=p=>p.pts.map((a,i)=>[a,p.pts[(i+1)%p.pts.length]]);
+const midOf=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2];
+function flapAttachEdge(pieces,i){// the flap edge that lies on a fold shared with a panel
+  const p=pieces[i];let best=-1,bl=0;edgesOf(p).forEach(([a,b],k)=>{const m=midOf(a,b),L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(L<1)return;
+    if(pieces.some((q,j)=>j!==i&&isFacePiece(q)&&edgesOf(q).some(([c,d])=>segOn(m,c,d)&&segOn(a,c,d,.5)&&segOn(b,c,d,.5)))&&L>bl){best=k;bl=L;}});
+  if(best<0)edgesOf(p).forEach(([a,b],k)=>{const m=midOf(a,b),L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(pieces.some((q,j)=>j!==i&&edgesOf(q).some(([c,d])=>segOn(m,c,d)))&&L>bl){best=k;bl=L;}});
+  return best;}
+function freeEdges(pieces){// panel edges with nothing attached, as candidates to receive a flap
+  const out=[];pieces.forEach((p,i)=>{if(!isFacePiece(p))return;edgesOf(p).forEach(([a,b],k)=>{const L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(L<4)return;const m=midOf(a,b);
+    if(!pieces.some((q,j)=>j!==i&&edgesOf(q).some(([c,d])=>segOn(m,c,d,.2))))out.push({p:i,e:k,a,b});});});return out;}
+function centroid(pts){return pts.reduce((s,q)=>[s[0]+q[0]/pts.length,s[1]+q[1]/pts.length],[0,0]);}
+function moveFlap(pieces,folds,fi,pi,ek){// map the flap's attach edge onto panel edge (pi,ek), flap pointing away from the panel
+  const fl=pieces[fi],ak=flapAttachEdge(pieces,fi);if(ak<0)return false;
+  const [a1,a2]=edgesOf(fl)[ak],[t1,t2]=edgesOf(pieces[pi])[ek];
+  const ax=a2[0]-a1[0],ay=a2[1]-a1[1],AL=Math.hypot(ax,ay),ux=ax/AL,uy=ay/AL,tx=t2[0]-t1[0],ty=t2[1]-t1[1],TL=Math.hypot(tx,ty);
+  let nx=-ty/TL,ny=tx/TL;const pc=centroid(pieces[pi].pts),tm=midOf(t1,t2);if((pc[0]-tm[0])*nx+(pc[1]-tm[1])*ny>0){nx=-nx;ny=-ny;}
+  const fc=centroid(fl.pts),vc=(fc[0]-a1[0])*-uy+(fc[1]-a1[1])*ux,s=vc>=0?1:-1;
+  fl.pts=fl.pts.map(q=>{const u=((q[0]-a1[0])*ux+(q[1]-a1[1])*uy)/AL,v=((q[0]-a1[0])*-uy+(q[1]-a1[1])*ux)*s;return[t1[0]+u*tx+v*nx,t1[1]+u*ty+v*ny];});
+  for(let i=folds.length-1;i>=0;i--){const f=folds[i];if(segOn(midOf([f[0],f[1]],[f[2],f[3]]),a1,a2)&&segOn([f[0],f[1]],a1,a2,.5)&&segOn([f[2],f[3]],a1,a2,.5))folds.splice(i,1);}
+  folds.push([t1[0],t1[1],t2[0],t2[1]]);return true;}
+const flapSig=spec=>[spec.type,r1(spec.outer.w),r1(spec.outer.d),r1(spec.outer.h),spec.leaflet||0].join('|');
+function applyFlapEdits(spec,pieces,folds,holes,TW,TH,band){
+  const E=S.flapEdits;if(!E||E.sig!==flapSig(spec)||!E.list.length)return{TW,TH,band};
+  for(const m of E.list)if(pieces[m.f]&&pieces[m.p])moveFlap(pieces,folds,m.f,m.p,m.e);
+  let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;for(const p of pieces)for(const q of p.pts){x0=Math.min(x0,q[0]);y0=Math.min(y0,q[1]);x1=Math.max(x1,q[0]);y1=Math.max(y1,q[1]);}
+  const dx=-Math.min(0,x0),dy=-Math.min(0,y0);
+  if(dx||dy){for(const p of pieces){p.pts=p.pts.map(q=>[q[0]+dx,q[1]+dy]);if(p.img){p.img.x+=dx;p.img.y+=dy;}}folds.forEach(f=>{f[0]+=dx;f[1]+=dy;f[2]+=dx;f[3]+=dy;});holes.forEach(h=>h.forEach(q=>{q[0]+=dx;q[1]+=dy;}));if(band)band={x:band.x+dx,y:band.y+dy,w:band.w,h:band.h};}
+  return{TW:Math.max(TW+dx,x1+dx),TH:Math.max(TH+dy,y1+dy),band};}
+function flapLayer(pieces,f2){
+  const pts=p=>p.pts.map(q=>f2(q[0])+','+f2(q[1])).join(' ');
+  const fl=pieces.map((p,i)=>isFlapPiece(p)&&flapAttachEdge(pieces,i)>=0?`<polygon class="fl${FLAP.sel===i?' sel':''}" data-i="${i}" points="${pts(p)}"/>`:'').join('');
+  const eg=freeEdges(pieces).map(e=>`<line class="eg" data-p="${e.p}" data-e="${e.e}" x1="${f2(e.a[0])}" y1="${f2(e.a[1])}" x2="${f2(e.b[0])}" y2="${f2(e.b[1])}"/>`).join('');
+  return `<g class="flaps">${fl}</g><g class="edges${FLAP.sel!=null?' on':''}">${eg}</g>`;}
+const FLAP={sel:null};function buildDieline(spec,P,F,geoOnly){
   const {w:W,d:D,h:H}=spec.outer,type=spec.type,bg=P.pal.bg,inn=spec.mat.inner;
   const pieces=[],folds=[];
   const R=(x,y,w,h)=>[[x,y],[x+w,y],[x+w,y+h],[x,y+h]];
@@ -1747,6 +1787,7 @@ function buildDieline(spec,P,F,geoOnly){
     fold(xb,yb-H,xb+W,yb-H);fold(xb,ly,xb,yb-H);fold(xb+W,ly,xb+W,yb-H);fold(xb,ly,xb+W,ly);
     TW=W+4*H;TH=yb+D+H;
   }
+  ({TW,TH,band}=applyFlapEdits(spec,pieces,folds,holes,TW,TH,band));
   if(geoOnly)return {geo:{pieces,folds,TW,TH,band:band||{x:0,y:0,w:TW,h:TH}}};
   const urls={};const url=k=>urls[k]||(urls[k]=k==='tab'||k==='handle'?F[k].toDataURL('image/png'):F[k].toDataURL('image/jpeg',.86));
   const onSeg=(p,f)=>{const[x1,y1,x2,y2]=f,e=.01;const cr=(x2-x1)*(p[1]-y1)-(y2-y1)*(p[0]-x1);if(Math.abs(cr)>e*Math.hypot(x2-x1,y2-y1))return false;return p[0]>=Math.min(x1,x2)-e&&p[0]<=Math.max(x1,x2)+e&&p[1]>=Math.min(y1,y2)-e&&p[1]<=Math.max(y1,y2)+e;};
@@ -1765,7 +1806,7 @@ function buildDieline(spec,P,F,geoOnly){
   const M=Math.max(TW,TH)*.07+10,fs=Math.max(TW,TH)*.018,sw=Math.max(.3,Math.max(TW,TH)*.0012);
   const dim=`<g stroke="#8A857D" stroke-width="${sw}" fill="none"><path d="M0 ${-M*.45}H${f2(TW)}M0 ${-M*.6}v${M*.3}M${f2(TW)} ${-M*.6}v${M*.3}M${-M*.45} 0V${f2(TH)}M${-M*.6} 0h${M*.3}M${-M*.6} ${f2(TH)}h${M*.3}"/></g>
 <g fill="#5E5A53" font-family="Noto Sans KR, sans-serif" font-size="${f2(fs)}" text-anchor="middle"><text x="${f2(TW/2)}" y="${f2(-M*.45-fs*.5)}" paint-order="stroke" stroke="#fff" stroke-width="${fs*.5}">${r1(TW)} mm</text><text transform="translate(${f2(-M*.45-fs*.5)} ${f2(TH/2)}) rotate(-90)" paint-order="stroke" stroke="#fff" stroke-width="${fs*.5}">${r1(TH)} mm</text></g>`;
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${f2(-M)} ${f2(-M)} ${f2(TW+2*M)} ${f2(TH+2*M)}" width="${f2(TW+2*M)}mm" height="${f2(TH+2*M)}mm"><defs>${defs}</defs><rect x="${f2(-M)}" y="${f2(-M)}" width="${f2(TW+2*M)}" height="${f2(TH+2*M)}" fill="#fff"/>${body}<path d="${cut}" fill="none" stroke="#111" stroke-width="${f2(sw*1.3)}" stroke-linejoin="round"/><path d="${fd}" fill="none" stroke="#E5484D" stroke-width="${f2(sw*1.3)}" stroke-dasharray="${f2(sw*6)} ${f2(sw*4)}"/>${dim}<g class="hits">${hits}</g></svg>`;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${f2(-M)} ${f2(-M)} ${f2(TW+2*M)} ${f2(TH+2*M)}" width="${f2(TW+2*M)}mm" height="${f2(TH+2*M)}mm"><defs>${defs}</defs><rect x="${f2(-M)}" y="${f2(-M)}" width="${f2(TW+2*M)}" height="${f2(TH+2*M)}" fill="#fff"/>${body}<path d="${cut}" fill="none" stroke="#111" stroke-width="${f2(sw*1.3)}" stroke-linejoin="round"/><path d="${fd}" fill="none" stroke="#E5484D" stroke-width="${f2(sw*1.3)}" stroke-dasharray="${f2(sw*6)} ${f2(sw*4)}"/>${dim}${S.flapMode?flapLayer(pieces,f2):`<g class="hits">${hits}</g>`}</svg>`;
   spec.sheet={w:TW,h:TH};
   return {svg,urls,geo:{pieces,folds,cuts,TW,TH}};
 }
@@ -2670,7 +2711,24 @@ $('#sheetIn').addEventListener('change',e=>{const f=e.target.files[0];e.target.v
     $('#sheetRm').hidden=false;$('#sheetOpt').hidden=false;$('#sheetOpt').textContent='자동 글자 보이기';rebuild();
     toast(Math.abs(ar-ir)/ar>.08?`넣었어요. 이미지 비율(${r1(ir)})이 도면(${r1(ar)})과 달라 늘어나 보일 수 있어요. "PDF 저장"으로 받은 칼선 위에 디자인하면 딱 맞아요`:'도면 전체에 디자인을 입혔어요. 도면 위를 끌어서 옮기고, 아래 \'크기\'로 키울 수 있어요');}).catch(()=>toast('이미지를 읽지 못했어요'));});
 $('#sheetRm').onclick=()=>{S.sheetImg=null;$('#sheetRm').hidden=true;$('#sheetOpt').hidden=true;syncSheetCtl();rebuild();};
-// --- full-sheet design: resize with the slider, drag it on the dieline to move it ---
+// --- flap edit mode on the dieline ---
+function setFlapMode(on){S.flapMode=on;FLAP.sel=null;$('#flapB').classList.toggle('dark',on);$('#flapB').textContent=on?'날개 편집 끝내기':'날개 편집';$('#flapReset').hidden=!(on||(S.flapEdits&&S.flapEdits.list.length));rebuild();
+  if(on)toast('주황 점선 날개를 끌어 다른 면 모서리에 놓거나, 날개를 누른 뒤 초록 모서리를 눌러요');}
+function commitFlap(f,p,e){if(!current)return;const sig=flapSig(current.spec);if(!S.flapEdits||S.flapEdits.sig!==sig)S.flapEdits={sig,list:[]};S.flapEdits.list.push({f,p,e});FLAP.sel=null;$('#flapReset').hidden=false;rebuild();toast('날개를 옮겨 붙였어요. 칼선·PDF·PSD에 반영돼요');}
+$('#flapB').onclick=()=>setFlapMode(!S.flapMode);
+$('#flapReset').onclick=()=>{S.flapEdits=null;FLAP.sel=null;$('#flapReset').hidden=!S.flapMode;rebuild();toast('도면을 원래대로 돌렸어요');};
+const FD={on:false};
+$('#dl').addEventListener('pointerdown',e=>{if(!S.flapMode)return;const pg=e.target.closest('polygon.fl');if(!pg)return;const svg=$('#dl svg'),M=svg.getScreenCTM();if(!M)return;e.preventDefault();e.stopPropagation();
+  const i=+pg.dataset.i;FLAP.sel=i;$$('#dl polygon.fl').forEach(x=>x.classList.toggle('sel',x===pg));const eg=$('#dl .edges');if(eg)eg.classList.add('on');
+  FD.on=true;FD.moved=false;FD.el=pg;FD.i=i;FD.inv=M.inverse();FD.p0=new DOMPoint(e.clientX,e.clientY).matrixTransform(FD.inv);FD.id=e.pointerId;
+  const ps=current.spec.geo.pieces[i],k=flapAttachEdge(current.spec.geo.pieces,i),ed=k>=0?edgesOf(ps)[k]:null;FD.am=ed?midOf(ed[0],ed[1]):centroid(ps.pts);},true);
+window.addEventListener('pointermove',e=>{if(!FD.on||e.pointerId!==FD.id)return;const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(FD.inv),dx=p.x-FD.p0.x,dy=p.y-FD.p0.y;
+  if(!FD.moved&&Math.hypot(dx,dy)<1.5)return;FD.moved=true;FD.el.setAttribute('transform',`translate(${dx} ${dy})`);
+  const q=[FD.am[0]+dx,FD.am[1]+dy];let best=null,bd=1e9;$$('#dl .edges line').forEach(l=>{l.classList.remove('near');const m=[(+l.getAttribute('x1')+ +l.getAttribute('x2'))/2,(+l.getAttribute('y1')+ +l.getAttribute('y2'))/2],d=Math.hypot(m[0]-q[0],m[1]-q[1]);if(d<bd){bd=d;best=l;}});
+  FD.near=best&&bd<Math.max(25,(current.spec.geo.TW||200)*.08)?best:null;if(FD.near)FD.near.classList.add('near');});
+window.addEventListener('pointerup',e=>{if(!FD.on||e.pointerId!==FD.id)return;FD.on=false;if(!FD.moved)return;
+  if(FD.near)commitFlap(FD.i,+FD.near.dataset.p,+FD.near.dataset.e);else{FD.el.removeAttribute('transform');toast('면 모서리 가까이에 놓아 주세요');}});
+$('#dl').addEventListener('click',e=>{if(!S.flapMode)return;const l=e.target.closest('line.eg');if(!l||FLAP.sel==null)return;e.stopPropagation();commitFlap(FLAP.sel,+l.dataset.p,+l.dataset.e);},true);// --- full-sheet design: resize with the slider, drag it on the dieline to move it ---
 function syncSheetCtl(){$('#sheetCtl').hidden=!S.sheetImg;const v=Math.round((S.sheetT||{s:1}).s*100);$('#sheetScale').value=v;$('#sheetScaleV').textContent=v+'%';$('#dl').classList.toggle('canmove',!!S.sheetImg);}
 const sheetRebuild=debounce(()=>rebuild(),140);
 $('#sheetScale').addEventListener('input',e=>{S.sheetT.s=+e.target.value/100;$('#sheetScaleV').textContent=e.target.value+'%';sheetGhost(true);sheetRebuild();});
@@ -2683,7 +2741,7 @@ function sheetGhost(){const svg=$('#dl svg');if(!svg||!S.sheetImg||!current||!cu
   svg.querySelectorAll('image.sheetimg').forEach(set);
   svg.querySelectorAll('image.faceimg').forEach(im=>{if(im.getAttribute('href')!==href){im.setAttribute('href',href);im.removeAttribute('transform');}set(im);});}
 const SD={on:false,moved:false};
-$('#dl').addEventListener('pointerdown',e=>{const svg=$('#dl svg');if(!S.sheetImg||!svg||e.button!==0)return;const M=svg.getScreenCTM();if(!M)return;
+$('#dl').addEventListener('pointerdown',e=>{const svg=$('#dl svg');if(!S.sheetImg||!svg||e.button!==0||S.flapMode)return;const M=svg.getScreenCTM();if(!M)return;
   SD.on=true;SD.moved=false;SD.inv=M.inverse();SD.p0=new DOMPoint(e.clientX,e.clientY).matrixTransform(SD.inv);SD.t0={x:S.sheetT.x,y:S.sheetT.y};SD.id=e.pointerId;});
 window.addEventListener('pointermove',e=>{if(!SD.on||e.pointerId!==SD.id)return;const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(SD.inv),dx=p.x-SD.p0.x,dy=p.y-SD.p0.y;
   if(!SD.moved&&Math.hypot(dx,dy)<2)return;if(!SD.moved){SD.moved=true;$('#dl').classList.add('moving');}S.sheetT.x=SD.t0.x+dx;S.sheetT.y=SD.t0.y+dy;sheetGhost(true);});

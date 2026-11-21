@@ -82,7 +82,7 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
 #viewer{position:absolute;inset:0}
 #viewer canvas{display:block;width:100%!important;height:100%!important;cursor:grab;touch-action:none}
 #viewer canvas:active{cursor:grabbing}
-.lpanel{position:absolute;left:50%;bottom:66px;transform:translateX(-50%);width:430px;max-width:calc(100% - 20px);background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 10px 32px rgba(0,0,0,.14);z-index:6}
+.lpanel{position:absolute;right:14px;bottom:66px;width:430px;max-width:calc(100% - 20px);background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 10px 32px rgba(0,0,0,.14);z-index:6}
 .lchips{display:flex;gap:6px;margin-bottom:10px}
 .lchip{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:5px 10px 5px 6px;font-size:12.5px;cursor:pointer;background:#fff}
 .lchip.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink);font-weight:700}
@@ -100,7 +100,8 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
 .editB{position:absolute;right:14px;top:58px;height:34px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.95);font-size:12.5px;font-weight:700;padding:0 12px;display:flex;align-items:center;gap:6px;cursor:pointer}
 .editB svg{width:15px;height:15px}
 .tpanel{position:absolute;right:14px;top:100px;width:310px;max-height:calc(100% - 180px);overflow:auto;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 10px 32px rgba(0,0,0,.12);z-index:5}
-.tph{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.tph{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;cursor:move;user-select:none;touch-action:none}
+.tph>b::before{content:'⠿ ';color:var(--muted);font-weight:400}
 .tpanel input[type=text],.tpanel select{height:36px;font-size:13px}
 .tpanel textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;font-size:13px;background:var(--soft);resize:vertical;outline:none}
 .tpanel textarea:focus{border-color:var(--ink);background:#fff}
@@ -2905,6 +2906,16 @@ $('#comList').addEventListener('click',e=>{const z=e.target.closest('[data-zoom]
   const b=e.target.closest('[data-open]');if(!b)return;const it=COM.items[+b.dataset.open];const st=(it&&it.design&&it.design.state)||{};
   for(const k of SAVE_KEYS)if(k in st)S[k]=st[k];edited.brand=edited.name=true;if(S.scene==='plain'){const g=BGS[S.bg||0];$('#p3d').style.background=`linear-gradient(${g.a},${g.b})`;}if($('#sceneSel'))$('#sceneSel').value=S.scene;applyScene();
   rebuild();showTab('p3d');toast(`"${it.title}" 설정을 불러왔어요. 왼쪽에서 바꿔 보세요`);});
+
+// floating panels (lighting, text editing) can be dragged by their title bar and stay inside the 3D view
+function makeDraggable(panel){const bar=panel.querySelector('.tph');if(!bar)return;let st=null;
+  bar.addEventListener('pointerdown',e=>{if(e.target.closest('button,input,select'))return;const pr=panel.getBoundingClientRect(),hr=panel.offsetParent.getBoundingClientRect();
+    st={id:e.pointerId,dx:e.clientX-pr.left,dy:e.clientY-pr.top,hr};try{bar.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();});
+  bar.addEventListener('pointermove',e=>{if(!st||e.pointerId!==st.id)return;const hr=st.hr,w=panel.offsetWidth,h=panel.offsetHeight;
+    const x=clamp(e.clientX-hr.left-st.dx,0,Math.max(0,hr.width-w)),y=clamp(e.clientY-hr.top-st.dy,0,Math.max(0,hr.height-h));
+    Object.assign(panel.style,{left:x+'px',top:y+'px',right:'auto',bottom:'auto',transform:'none'});});
+  const end=e=>{if(st&&e.pointerId===st.id)st=null;};bar.addEventListener('pointerup',end);bar.addEventListener('pointercancel',end);}
+makeDraggable($('#lpanel'));makeDraggable($('#tpanel'));
 
 initThree();
 rebuild();

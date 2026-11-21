@@ -50,7 +50,7 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
 .chip em{font-style:normal;color:var(--muted);font-size:11px;margin-left:4px}
 .chip.on em{color:#bbb}
 .presets{margin-top:10px}
-.seg{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:auto;background:#F0EDE7;border-radius:11px;padding:3px;gap:3px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:auto;background:#F0EDE7;border-radius:11px;padding:3px;gap:3px}
 .seg button{border:0;background:transparent;border-radius:8px;padding:8px 0;font-size:12.5px;cursor:pointer;color:var(--muted)}
 .seg button.on{background:#fff;color:var(--ink);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .range{display:flex;align-items:center;gap:10px}
@@ -376,7 +376,10 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
         <button data-v="hanger">걸이형</button>
         <button data-v="drawer">서랍형</button>
         <button data-v="lidbase">천지함</button>
+        <button data-v="mailer">메일러</button>
         <button data-v="rsc">택배박스</button>
+        <button data-v="tent">삼각 리본</button>
+        <button data-v="handle">손잡이</button>
       </div>
       <div class="field" style="margin-top:12px"><label>상자 재질·두께</label><select id="board"></select></div>
       <div class="hint" id="boardHint"></div>
@@ -622,7 +625,7 @@ const STY={
 };
 const PAT={arcs:'아크 라인',lines:'가는 줄무늬',blocks:'컬러 블록',dots:'도트',waves:'웨이브',confetti:'컨페티',stripes:'사선 스트라이프',stamp:'스탬프',grid:'그리드',deco:'아르데코',diamonds:'다이아 격자',leaves:'잎사귀',blobs:'유기적 도형',circuit:'회로',rings:'동심원',splatter:'잉크 스플래터',none:'패턴 없음'};
 const BUSY=new Set(['dots','confetti','stripes','leaves','blobs','stamp','circuit','waves','splatter']);
-const TYPES={tuck:{label:'리버스 턱엔드 박스',en:'Reverse Tuck End'},hanger:{label:'걸이형 턱엔드 박스',en:'Hang Tab Tuck End'},drawer:{label:'서랍형 박스 (슬리브+트레이)',en:'Sleeve & Tray Box'},lidbase:{label:'천지함 (뚜껑+바닥)',en:'Lid & Base Rigid Box'},mailer:{label:'메일러 박스',en:'Mailer Box'},rsc:{label:'택배 박스 (RSC)',en:'Regular Slotted Carton'},tent:{label:'삼각 텐트 리본 박스',en:'Triangle Tent Box with Ribbon'}};
+const TYPES={tuck:{label:'리버스 턱엔드 박스',en:'Reverse Tuck End'},hanger:{label:'걸이형 턱엔드 박스',en:'Hang Tab Tuck End'},drawer:{label:'서랍형 박스 (슬리브+트레이)',en:'Sleeve & Tray Box'},lidbase:{label:'천지함 (뚜껑+바닥)',en:'Lid & Base Rigid Box'},mailer:{label:'메일러 박스',en:'Mailer Box'},rsc:{label:'택배 박스 (RSC)',en:'Regular Slotted Carton'},tent:{label:'삼각 텐트 리본 박스',en:'Triangle Tent Box with Ribbon'},handle:{label:'손잡이 박스 (자동 잠금 바닥)',en:'Carry Box with Handle & Crash-Lock Bottom'}};
 const LAYOUTS={classic:'가운데 정렬',minimal:'미니멀',giant:'큰 글자',band:'컬러 띠',editorial:'에디토리얼'};
 const MATS={
   tuck:{t:.5,name:'아이보리 판지 350g',short:'IV 350g',inner:'#F1EDE4',kraft:false},
@@ -674,7 +677,7 @@ function autoType(p,cat){
   if(cat==='apparel'&&p.h<=mn*.75) return 'lidbase';
   return 'tuck';
 }
-const REMOVED_TYPES=new Set(['mailer','tent']); // taken out of the app; old saved designs fall back to the automatic pick
+const REMOVED_TYPES=new Set([]); // types taken out of the app fall back to the automatic pick
 function computeSpec(st){st=st||S;
   const p={w:st.w,d:st.d,h:st.h};
   const bt=REMOVED_TYPES.has(st.boxType)||!TYPES[st.boxType]?'auto':st.boxType;
@@ -683,7 +686,7 @@ function computeSpec(st){st=st||S;
   const mat=Object.assign({key:bk},BOARDS[bk]), c=st.clearance, t=mat.t;
   const inner={w:p.w+2*c,d:p.d+2*c,h:p.h+2*c};
   const outer=type==='drawer'?{w:inner.w+4*t+1,d:inner.d+2*t,h:inner.h+4*t+1}:{w:inner.w+2*t,d:inner.d+2*t,h:inner.h+2*t};
-  const tabH=clamp(outer.w*.45,25,45),lidH=clamp(outer.h*.33,12,45);
+  const tabH=clamp(outer.w*.45,25,45),lidH=clamp(outer.h*.33,12,45),handleH=clamp(outer.d*.45,25,45);
   const mx=Math.max(p.w,p.d,p.h), why=[];
   if(bt==='auto'){
     if(type==='rsc') why.push(`가장 긴 변이 ${r1(mx)}mm로 커서, 무게와 충격을 잘 버티는 골판지 택배 박스를 골랐어요.`);
@@ -692,7 +695,7 @@ function computeSpec(st){st=st||S;
     else why.push('세워서 진열하는 제품이라, 매장과 온라인에서 가장 흔히 쓰는 리버스 턱엔드 박스를 골랐어요.');
   } else why.push('직접 고른 박스 형태를 쓰고 있어요.');
   why.push(`제품 사방에 ${c}mm 여유를 두고 재질 두께 ${t}mm를 더해 바깥 치수를 계산했어요.`);
-  return {type,mat,prod:p,inner,outer,why,tabH,lidH,leaflet:['tuck','hanger'].includes(type)?(+st.leaflet||0):0,cont:resolveCont(st)};
+  return {type,mat,prod:p,inner,outer,why,tabH,lidH,handleH,leaflet:['tuck','hanger'].includes(type)?(+st.leaflet||0):0,cont:resolveCont(st)};
 }
 function derivePal(c){const L=lum(c);return{bg:c,ink:L>.42?'#1C1B19':'#FFFBF3',acc:L>.42?mix(c,'#000000',.32):mix(c,'#FFFFFF',.42)};}
 function resolveDesign(spec,st){st=st||S;
@@ -1077,9 +1080,9 @@ function drawFaces(spec,P,opt){
     if(ph){const x=c.ctx('사진');if(ph.__exact)x.drawImage(ph,0,0,c.w,c.h);else{const s=Math.max(c.w/ph.width,c.h/ph.height),iw=ph.width*s,ih=ph.height*s;x.drawImage(ph,(c.w-iw)/2,(c.h-ih)/2,iw,ih);}}
     else if(P.pattern!=='none'||P.style==='kraft'){const p=c.ctx('패턴');if(sx==null)p.drawImage(src,0,0);else p.drawImage(src,Math.round(sx*k),0,c.w,c.h,0,0,c.w,c.h);}return c;};
   const topHero=['mailer','drawer','lidbase'].includes(spec.type);
-  const C={front:base('front',W,SL,strip,0),right:base('right',D,H,strip,W),back:base('back',W,SL,strip,W+D),left:base('left',D,H,strip,2*W+D),top:base('top',W,D,pat(2,W,D)),bottom:base('bottom',W,D,pat(3,W,D))};
+  const C={front:base('front',W,SL,strip,0),right:base('right',D,SL,strip,W),back:base('back',W,SL,strip,W+D),left:base('left',D,SL,strip,2*W+D),top:base('top',W,D,pat(2,W,D)),bottom:base('bottom',W,D,pat(3,W,D))};
   if(tent&&P.pattern==='none'&&P.style!=='kraft'){// triangle ends carry the pattern even when the slopes are plain
-    const sp=Object.assign({},P,{pattern:'splatter'});for(const key of['left','right']){const cv=makeCanvas(px(D),px(H));paintPattern(cv.getContext('2d'),cv.width,cv.height,sp,k,mulberry(P.seedBase+9),false);C[key].ctx('패턴').drawImage(cv,0,0);}}
+    const sp=Object.assign({},P,{pattern:'splatter'});for(const key of['left','right']){const cv=makeCanvas(px(D),px(SL));paintPattern(cv.getContext('2d'),cv.width,cv.height,sp,k,mulberry(P.seedBase+9),false);C[key].ctx('패턴').drawImage(cv,0,0);}}
   if(spec.type==='lidbase'){C.lidFront=base('lidFront',W+2*spec.mat.t,spec.lidH,pat(5,W,spec.lidH));C.lidSide=base('lidSide',D+2*spec.mat.t,spec.lidH,pat(6,D,spec.lidH));}
   for(const key in C)C[key].fx=P.fx&&P.fx!=='none';
   const d=(name,fn,...a)=>fn(C[name],C[name].w,C[name].h,P,k,...a);
@@ -1100,6 +1103,11 @@ function drawFaces(spec,P,opt){
   if(spec.type==='hanger'){const tw=px(W),th=px(spec.tabH),c=makeCanvas(tw,th),x=c.getContext('2d');x.fillStyle=P.pal.bg;x.fillRect(0,0,tw,th);
     const st=P.st,bs=Math.min(th*.16,tw*.08);x.font=st.brand(bs);x.fillStyle=P.style==='luxury'?P.pal.acc:P.pal.ink;x.textAlign='center';fillSpaced(x,P.text.brand,tw/2,th*.86,bs*st.sp);
     const sw=Math.min(30*k,tw*.5),sh=8*k,cx=tw/2,cy=th*.4;x.globalCompositeOperation='destination-out';rr(x,cx-sw/2,cy-sh/2,sw,sh,sh/2);x.fill();x.beginPath();x.arc(cx,cy-sh*.35,sh*.62,0,Math.PI*2);x.fill();x.globalCompositeOperation='source-over';F.tab=c;}
+  if(spec.type==='handle'){// handle panel: brand line plus a rounded hand-hole cut out (transparent)
+    const tw=px(W),th=px(spec.handleH),c=makeCanvas(tw,th),x=c.getContext('2d');x.fillStyle=P.pal.bg;x.fillRect(0,0,tw,th);
+    if(P.pattern!=='none'){const pc=pat(7,W,spec.handleH);x.drawImage(pc,0,0,tw,th);}
+    const st=P.st,bs=Math.min(th*.13,tw*.06);x.font=st.brand(bs);x.fillStyle=P.style==='luxury'?P.pal.acc:P.pal.ink;fillSpaced(x,P.text.brand,tw/2,th*.9,bs*st.sp);
+    const sw=Math.min(80*k,tw*.55),sh=Math.min(20*k,th*.34),cy=th*.42;x.globalCompositeOperation='destination-out';rr(x,tw/2-sw/2,cy-sh/2,sw,sh,sh/2);x.fill();x.globalCompositeOperation='source-over';F.handle=c;}
   if(topHero&&spec.type==='mailer'&&!layered){const c=new Comp(px(W),px(D),false);drawThanks(c,c.w,c.h,P,k,spec);F.lidInner=c.flat();}
   if(spec.type==='rsc'){
     const T=F.top,hh=Math.round(T.height/2);
@@ -1209,12 +1217,14 @@ function buildRigCross(grp,parts,W,D,H,panel,face,flatMat,inMat,type){
   Rg.right=hg(grp,W/2,0,0);face(Rg.right,'right',D,wh,o=>{o.position.set(0,wh/2,0);o.rotation.y=Math.PI/2;});
   Rg.left=hg(grp,-W/2,0,0);face(Rg.left,'left',D,wh,o=>{o.position.set(0,wh/2,0);o.rotation.y=-Math.PI/2;});
   if(type==='mailer'){Rg.lid=hg(Rg.back,0,H,0);face(Rg.lid,'top',W,D,o=>{o.position.set(0,D/2,0);o.rotation.x=Math.PI;});
-    const lip=H*.55;Rg.tuck=hg(Rg.lid,0,D-.002,0);panel(Rg.tuck,W*.97,lip,flatMat,inMat,o=>{o.position.set(0,lip/2,0);o.rotation.x=Math.PI;});}
+    const lip=H*.55;Rg.tuck=hg(Rg.lid,0,D-.004,0);panel(Rg.tuck,W*.97,lip,flatMat,inMat,o=>{o.position.set(0,lip/2,0);o.rotation.x=Math.PI;});}
   parts.type='fold';parts.rig=Rg;
 }
 function applyFoldCross(u,Rg){const f=1-u,sm=(a,b)=>{const x=clamp((f-a)/(b-a),0,1);return x*x*(3-2*x);},H2=Math.PI/2,L=!!Rg.lid;
   Rg.front.rotation.x=H2*(1-sm(0,L?.22:.3));Rg.right.rotation.z=-H2*(1-sm(L?.12:.2,L?.34:.5));Rg.back.rotation.x=-H2*(1-sm(L?.22:.4,L?.44:.7));Rg.left.rotation.z=H2*(1-sm(L?.32:.6,L?.54:1));
-  if(L){Rg.lid.rotation.x=H2*sm(.6,.86);Rg.tuck.rotation.x=H2*sm(.84,1);}}
+  // mailer lid: pre-bend the front tuck, then keep it pointing straight down while the lid swings shut,
+  // so it slides in behind the front wall instead of folding down over the outside.
+  if(L){const al=H2*sm(.62,.95);Rg.lid.rotation.x=al;Rg.tuck.rotation.x=sm(.56,.63)*Math.min(Math.PI*.9,Math.PI-al)+.05*sm(.93,1);}}
 function applyFold(u,Rg){
   // real carton assembly: blank lies print-side up (as in the dieline) -> flipped over -> walls folded up into a tube lying on the table
   // -> bottom closed -> tube stood upright -> top closed.
@@ -1247,17 +1257,29 @@ function applyLeaf(u,L){if(!L)return;const sm=(a,b)=>{const x=clamp((u-a)/(b-a),
   const fo=beta/Math.PI;L.pages.forEach((g,i)=>{if(i===0)return;g.rotation.x=(i%2?-1:1)*beta;g.position.z=(i%2?1:-1)*L.th*1.4*fo;});
   if(R3.leafShift){const z=R3.leafZoom||1;R3.leafCam={up:L.H*.5*lift*(1-move),m:move,z:1+.55*lift*(1-move)+(z-1)*move};}
   r.visible=true;}
+// v=0 closed (panels lean together, ribbon tied), v=1 open (panels upright like a bag, gusset ends flat rectangles).
+function applyTent(v,T){
+  const e=v*v*(3-2*v),c=1-e,th=T.al*c,SL=T.SL,D=T.D,sn=Math.sin(th),cs=Math.cos(th);
+  T.tf.rotation.x=-th;T.tb.rotation.x=-th;
+  const top=SL*cs,zf=D/2-SL*sn,zb=-D/2+SL*sn,Hs=T.H/SL;
+  for(const E of T.ends){// corners in world (z,y), converted to the end's local x (= -sx*z); uvs follow the gusset crease pattern
+    const pts=[[-D/2,0,0,0],[D/2,0,1,0],[zf,top,1-.5*c,1-(1-Hs)*c],[zb,top,.5*c,1-(1-Hs)*c]].map(([z,y,u,vv])=>({x:-E.sx*z,y,u:E.sx>0?1-u:u,v:vv}));
+    pts.sort((a,b)=>a.y-b.y||a.x-b.x);const bot=pts.slice(0,2),tp=pts.slice(2).sort((a,b)=>b.x-a.x);const q=[bot[0],bot[1],tp[0],tp[1]];
+    const P=E.geo.attributes.position,U=E.geo.attributes.uv;q.forEach((p,i)=>{P.setXYZ(i,p.x,p.y,0);U.setXY(i,p.u,p.v);});P.needsUpdate=U.needsUpdate=true;E.geo.computeVertexNormals();E.geo.computeBoundingSphere();}
+  const tied=v<.04;T.bow.visible=T.tails.visible=tied;T.loose.forEach(m=>m.visible=!tied);
+}
 function applyOpen(v,p,show){
   if(!p)return;applyLeaf(R3.leafV||0,p.leaf);
   if(p.type==='fold'){if(p.rig.kind==='cross')applyFoldCross(v,p.rig);else applyFold(v,p.rig);if(p.prodOut)p.prodOut.visible=!!show;if(p.prodIn)p.prodIn.visible=false;return;}const late=clamp((v-.3)/.7,0,1);
   if(p.type==='drawer'){p.tray.position.z=v*p.trayD*.72;}
   else if(p.type==='lidbase'){p.lid.position.y=p.H+.0006+v*p.H*1.05;p.lid.position.z=-v*p.D*.22;p.lid.rotation.x=-v*.3;}
   else if(p.type==='hanger'){p.hingeA.rotation.x=v*1.95;p.flap.rotation.x=-v*.18;const dv=clamp((v-.25)/.6,0,1),e=dv*dv*(3-2*dv);p.dustL.rotation.z=e*.42;p.dustR.rotation.z=-e*.42;}
-  else if(p.type==='tent'){p.hingeA.rotation.x=v*1.3;p.ribbon.forEach(r=>r.visible=v<.04);}
+  else if(p.type==='tent')applyTent(v,p.tent);
+  else if(p.type==='handle'){const e=v*v*(3-2*v);p.roof.forEach(o=>{o.r.rotation.x=-Math.PI/2*(1-e);o.h.rotation.x=Math.PI/2*(1-e);});const dv=clamp((v-.25)/.6,0,1),ee=dv*dv*(3-2*dv);p.dustL.rotation.z=ee*.42;p.dustR.rotation.z=-ee*.42;}
   else if(p.type==='rsc'){p.hingeA.rotation.x=v*2.05;p.hingeB.rotation.x=-v*2.05;p.dustL.rotation.z=late*.42;p.dustR.rotation.z=-late*.42;}
   else{p.hingeA.rotation.x=-v*1.95;if(p.flap)p.flap.rotation.x=p.type==='mailer'?v*.55:v*.18;if(p.ears){const ev=clamp(v/.5,0,1);p.ears[0].rotation.z=ev*.35;p.ears[1].rotation.z=-ev*.35;}if(p.dustL){const dv=clamp((v-.25)/.6,0,1),e=dv*dv*(3-2*dv);p.dustL.rotation.z=e*.42;p.dustR.rotation.z=-e*.42;}}
   if(p.prodOut)p.prodOut.visible=!!show;
-  if(p.prodIn)p.prodIn.visible=!!show&&v>.12;
+  if(p.prodIn)p.prodIn.visible=!!show&&v>(p.type==='tent'?.9:.12);
 }
 function innerTexture(spec,over){
   const c=makeCanvas(256,256),x=c.getContext('2d'),col=over||spec.mat.inner;x.fillStyle=col;x.fillRect(0,0,256,256);speckle(x,256,256,mulberry(3),2,col);
@@ -1418,34 +1440,49 @@ function buildScene(T,spec,P,F,st){
   const dust=(fw,len,mat)=>{const L=new THREE.Group();L.position.set(-W/2,H-.002,0);grp.add(L);panel(L,fw,len,mat,inMat,o=>{o.rotation.x=-Math.PI/2;o.position.x=fw/2;});
     const R=new THREE.Group();R.position.set(W/2,H-.002,0);grp.add(R);panel(R,fw,len,mat,inMat,o=>{o.rotation.x=-Math.PI/2;o.position.x=-fw/2;});parts.dustL=L;parts.dustR=R;};
   let prodParent=grp,prodY=t+.0006;
-  if(st.foldMode&&spec.type!=='tent'){if(['mailer','lidbase','drawer'].includes(spec.type))buildRigCross(grp,parts,W,D,H,panel,face,flatMat,inMat,spec.type);else buildRig(grp,parts,W,D,H,panel,face,flatMat,inMat,spec.type);}
+  if(st.foldMode&&!['tent','handle'].includes(spec.type)){if(['mailer','lidbase','drawer'].includes(spec.type))buildRigCross(grp,parts,W,D,H,panel,face,flatMat,inMat,spec.type);else buildRig(grp,parts,W,D,H,panel,face,flatMat,inMat,spec.type);}
   else if(spec.type==='tent'){
-    // triangular prism: base, two slopes meeting at the ridge, triangle ends, satin ribbon bow through the ridge.
+    // CULTI-style ribbon tent box: base, front/back panels that lean together (closed) or stand up like a bag (open),
+    // gusset ends that show as a triangle when closed and a rectangle when open, ribbon threaded through a hole in each panel.
     const SL=Math.hypot(D/2,H),al=Math.atan2(D/2,H);
     face(grp,'bottom',W,D,o=>{o.position.set(0,.0008,0);o.rotation.x=Math.PI/2;});
-    const tri=(key,sx)=>{const sh=new THREE.Shape();sh.moveTo(-D/2,0);sh.lineTo(D/2,0);sh.lineTo(0,H);sh.closePath();const geo=keep(new THREE.ShapeGeometry(sh));
-      const pa=geo.attributes.position,uv=[];for(let i=0;i<pa.count;i++)uv.push((pa.getX(i)+D/2)/D,pa.getY(i)/H);geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+    const ends=[];
+    for(const sx of[1,-1]){const geo=keep(new THREE.BufferGeometry());geo.setAttribute('position',new THREE.Float32BufferAttribute(new Array(12).fill(0),3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(new Array(8).fill(0),2));geo.setIndex([0,1,2,0,2,3]);
       const g=new THREE.Group();g.position.set(sx*W/2,0,0);g.rotation.y=sx*Math.PI/2;grp.add(g);
-      const a=new THREE.Mesh(geo,om(tex(F[key])));a.castShadow=a.receiveShadow=true;const b=new THREE.Mesh(geo,inMat);b.receiveShadow=true;g.add(a,b);};
-    tri('right',1);tri('left',-1);
-    const hf=new THREE.Group();hf.position.set(0,0,D/2);grp.add(hf);const tf=new THREE.Group();tf.rotation.x=-al;hf.add(tf);
+      const a=new THREE.Mesh(geo,om(tex(F[sx>0?'right':'left'])));a.castShadow=a.receiveShadow=true;const b=new THREE.Mesh(geo,inMat);b.receiveShadow=true;g.add(a,b);ends.push({geo,sx});}
+    const hf=new THREE.Group();hf.position.set(0,0,D/2);grp.add(hf);const tf=new THREE.Group();hf.add(tf);
     face(tf,'front',W,SL,o=>o.position.set(0,SL/2,0));
-    const hb=new THREE.Group();hb.position.set(0,0,-D/2);hb.rotation.y=Math.PI;grp.add(hb);const tb=new THREE.Group();tb.rotation.x=-al;hb.add(tb);
+    const hb=new THREE.Group();hb.position.set(0,0,-D/2);hb.rotation.y=Math.PI;grp.add(hb);const tb=new THREE.Group();hb.add(tb);
     face(tb,'back',W,SL,o=>o.position.set(0,SL/2,0));
-    const rc=lum(P.pal.bg)>.45?(lum(P.pal.ink)<.35?P.pal.ink:'#141414'):(lum(P.pal.acc)>.5?P.pal.acc:'#F4EFE6');
+    const rc=lum(P.pal.bg)>.45?(P.style==='luxury'||P.fx!=='none'?'#C98A4B':(lum(P.pal.ink)<.35?P.pal.ink:'#141414')):(lum(P.pal.acc)>.5?P.pal.acc:'#F4EFE6');
     const rm=keep(new THREE.MeshStandardMaterial({color:new THREE.Color(rc),roughness:.32,metalness:.15,side:THREE.DoubleSide}));
-    const rw=clamp(Math.min(W,SL)*.045,.004,.02),bow=new THREE.Group();bow.position.set(0,H+rw*.15,0);grp.add(bow);
+    const holeR=clamp(Math.min(W,D)*.035,1.6,3)*s,hd=clamp(SL/s*.1,6,14)*s,rw=Math.min(holeR*1.7,clamp(Math.min(W,SL)*.045,.004,.02));
+    const holeM=keep(new THREE.MeshStandardMaterial({color:new THREE.Color(mix(P.pal.bg,'#000000',.6)),roughness:1}));
+    const strips=[];
+    for(const T of[tf,tb]){const h=new THREE.Mesh(keep(new THREE.CircleGeometry(holeR,24)),holeM);h.position.set(0,SL-hd,.0005);T.add(h);
+      const sg=keep(new THREE.PlaneGeometry(rw,hd+holeR));const st=new THREE.Mesh(sg,rm);st.position.set(0,SL-(hd+holeR)/2+holeR*.2,.0011);st.castShadow=true;T.add(st);strips.push(st);}
+    const bow=new THREE.Group();bow.position.set(0,H+rw*.15,0);grp.add(bow);
     const lr=clamp(Math.min(W*.13,SL*.16),.012,.08);
-    // loops are flat satin bands (open cylinders squashed into an oval), tails hang a short way down the front slope
+    // loops are flat satin bands (open cylinders squashed into an oval), tails hang a short way down the front panel
     for(const sx of[-1,1]){const loop=new THREE.Mesh(keep(new THREE.CylinderGeometry(lr,lr,rw,40,1,true)),rm);loop.rotation.x=Math.PI/2;loop.scale.set(1,1,.58);
       const lg=new THREE.Group();lg.position.set(sx*lr*.9,lr*.38,0);lg.rotation.z=sx*.32;lg.rotation.y=sx*.35;lg.add(loop);loop.castShadow=true;bow.add(lg);}
     const knot=new THREE.Mesh(keep(new THREE.BoxGeometry(rw*1.15,rw*1.05,rw*.9)),rm);knot.position.set(0,rw*.25,rw*.15);bow.add(knot);
     const tails=new THREE.Group();tails.position.set(0,SL-rw*.4,.0012);tf.add(tails);const tl=Math.min(SL*.34,lr*3.2);
     for(const sx of[-1,1]){const tg=keep(new THREE.PlaneGeometry(rw,tl));tg.translate(0,-tl/2,0);const t=new THREE.Mesh(tg,rm);t.rotation.z=sx*.2;t.castShadow=true;tails.add(t);}
-    parts.hingeA=hf;parts.al=al;parts.ribbon=[bow,tails];
+    // untied ribbon: each end comes out of its hole and hangs down the outside of its panel
+    const loose=[];for(const T of[tf,tb]){const lg=keep(new THREE.PlaneGeometry(rw,SL*.42));lg.translate(0,-SL*.21,0);const m=new THREE.Mesh(lg,rm);m.position.set(0,SL-hd,.0012);m.rotation.z=.12;T.add(m);loose.push(m);}
+    parts.tent={tf,tb,ends,SL,al,D,H,bow,tails,strips,loose};
   }
-  else if(spec.type==='drawer'){
-    face(grp,'top',W,D,o=>{o.position.set(0,H,0);o.rotation.x=-Math.PI/2;});
+  else if(spec.type==='handle'){
+    // carry box: walls + bottom, roof halves hinged on the front/back top edges, a handle panel standing on each roof half.
+    walls(grp,H);face(grp,'bottom',W,D,o=>{o.position.set(0,.0008,0);o.rotation.x=Math.PI/2;});
+    const hh=spec.handleH*s,hm=keep(new THREE.MeshStandardMaterial({map:tex(F.handle),roughness:.8,alphaTest:.5,side:THREE.DoubleSide})),roof=[];
+    for(const sz of[1,-1]){const g=new THREE.Group();g.position.set(0,H,sz*D/2);if(sz<0)g.rotation.y=Math.PI;grp.add(g);
+      const r=new THREE.Group();g.add(r);const rl=D/2-.001;panel(r,W,rl,flatMat,inMat,o=>o.position.set(0,rl/2,0));
+      const hg2=new THREE.Group();hg2.position.set(0,rl,0);r.add(hg2);const m=new THREE.Mesh(keep(new THREE.PlaneGeometry(W,hh)),hm);m.position.set(0,hh/2,0);m.castShadow=true;hg2.add(m);roof.push({r,h:hg2});}
+    dust(Math.min(D*.5,W*.45),D*.96,flatMat);parts.roof=roof;
+  }
+  else if(spec.type==='drawer'){    face(grp,'top',W,D,o=>{o.position.set(0,H,0);o.rotation.x=-Math.PI/2;});
     face(grp,'bottom',W,D,o=>{o.position.set(0,.0008,0);o.rotation.x=Math.PI/2;});
     face(grp,'right',D,H,o=>{o.position.set(W/2,H/2,0);o.rotation.y=Math.PI/2;});
     face(grp,'left',D,H,o=>{o.position.set(-W/2,H/2,0);o.rotation.y=-Math.PI/2;});
@@ -1504,7 +1541,7 @@ function buildScene(T,spec,P,F,st){
     R3.leafShift=new THREE.Vector3(-(W/2+lw/2+gap*.6)/2,-H*.3,(D/2+gap+n*lh)/2);R3.leafExt={z:n*lh+D+gap,x:lw+gap,h:H,xmin:-(W/2+lw+gap*.6),zc:(D/2+gap+n*lh)/2};}
   else{R3.leafShift=null;R3.leafExt=null;}
   const crossF=st.foldMode&&['mailer','lidbase','drawer'].includes(spec.type);
-  let xmax=crossF?W/2+H:st.foldMode?(W+D+Math.min(.15,W*.25)):W/2,depth=crossF?2*D+2*H:st.foldMode?H+2*D+2*Math.min(.18,D*.45):D,height=H+(spec.type==='hanger'?spec.tabH*s:0);
+  let xmax=crossF?W/2+H:st.foldMode?(W+D+Math.min(.15,W*.25)):W/2,depth=crossF?2*D+2*H:st.foldMode?H+2*D+2*Math.min(.18,D*.45):D,height=H+(spec.type==='hanger'?spec.tabH*s:spec.type==='handle'?spec.handleH*s:0);
   if(!st.foldMode)try{
     const pr=buildProduct(spec,P,st,T,keep,T.kq);
     const gx=(st.foldMode?W/2+H+.12:W/2+Math.max(.16,W*.3,pr.foot.w*.6))+pr.foot.w/2;
@@ -1605,19 +1642,40 @@ function buildDieline(spec,P,F,geoOnly){
   }else if(type==='tent'){
     // back slope (ridge at top) / base / front slope (ridge at bottom) in one column; triangle ends hang off the base,
     // glue tabs on the slope ends, one ribbon hole per slope just below the ridge.
-    const SL=Math.hypot(D/2,H),g=clamp(D*.22,7,14),x0=H,yB=SL,yF=SL+D;
+    const SL=Math.hypot(D/2,H),g=clamp(D*.22,7,14),x0=SL,yB=SL,yF=SL+D;
     add(R(x0,0,W,SL),bg,IMG('back',x0,0,W,SL));
     add(R(x0,yB,W,D),bg,IMG('bottom',x0,yB,W,D,180));
     add(R(x0,yF,W,SL),bg,IMG('front',x0,yF,W,SL,180));
-    add([[x0,yB],[x0-H,yB+D/2],[x0,yF]],bg,IMG('left',x0-H,yB,H,D,-90));
-    add([[x0+W,yB],[x0+W+H,yB+D/2],[x0+W,yF]],bg,IMG('right',x0+W,yB,H,D,90));
+    // gusset ends: a D × SL panel on each short edge of the base. Creases run from the two base corners up to the
+    // centre point at height H (that triangle is what shows when closed) and straight on to the top edge.
+    add(R(x0-SL,yB,SL,D),bg,IMG('left',x0-SL,yB,SL,D,-90));add(R(x0+W,yB,SL,D),bg,IMG('right',x0+W,yB,SL,D,90));
+    for(const[sx,xe]of[[-1,x0],[1,x0+W]]){const cx=xe+sx*H,cy=yB+D/2;fold(xe,yB,cx,cy);fold(xe,yF,cx,cy);fold(cx,cy,xe+sx*SL,cy);}
     for(const[y1,y2]of[[0,SL],[yF,yF+SL]]){const t=Math.min(g*.6,(y2-y1)*.2);
       add([[x0,y1],[x0-g,y1+t],[x0-g,y2-t],[x0,y2]],inn);add([[x0+W,y1],[x0+W+g,y1+t],[x0+W+g,y2-t],[x0+W,y2]],inn);
       fold(x0,y1,x0,y2);fold(x0+W,y1,x0+W,y2);}
     fold(x0,yB,x0+W,yB);fold(x0,yF,x0+W,yF);fold(x0,yB,x0,yF);fold(x0+W,yB,x0+W,yF);
     const hole=(cx,cy)=>{const r=clamp(Math.min(W,D)*.035,1.6,3),cp=[];for(let i=0;i<20;i++){const a=i/20*Math.PI*2;cp.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r]);}holes.push(cp);};
     const hd=clamp(SL*.1,6,14);hole(x0+W/2,hd);hole(x0+W/2,yF+SL-hd);
-    band={x:x0,y:0,w:W,h:2*SL+D};TW=x0+W+H;TH=2*SL+D;
+    band={x:x0,y:0,w:W,h:2*SL+D};TW=x0+W+SL;TH=2*SL+D;
+  }else if(type==='handle'){
+    // walls in a row with a glue tab; roof half + handle panel (hand-hole) on front and back; side top flaps; crash-lock bottom.
+    const G=clamp(W*.25,8,15),Hh=spec.handleH,y0=D/2+Hh,xF=G,xR=G+W,xB=G+W+D,xL=G+2*W+D,xE=G+2*W+2*D,yb=y0+H;
+    add(R(xF,y0,W,H),bg,IMG('front',xF,y0,W,H));add(R(xR,y0,D,H),bg,IMG('right',xR,y0,D,H));
+    add(R(xB,y0,W,H),bg,IMG('back',xB,y0,W,H));add(R(xL,y0,D,H),bg,IMG('left',xL,y0,D,H));
+    const gi=Math.min(G,H*.15);add([[xF,y0],[0,y0+gi],[0,yb-gi],[xF,yb]],inn);
+    for(const x of[xF,xB]){const yr=y0-D/2,yt=yr-Hh;add(R(x,yr,W,D/2),bg);
+      add([[x+W*.04,yr],[x+W*.12,yt],[x+W*.88,yt],[x+W*.96,yr]],bg,IMG('handle',x,yt,W,Hh));
+      const sw=Math.min(80,W*.55),sh=Math.min(20,Hh*.34),cx=x+W/2,cy=yt+Hh*.42,r=sh/2,hp=[];
+      for(let i=0;i<=8;i++){const a=-Math.PI/2+i/8*Math.PI;hp.push([cx+sw/2-r+Math.cos(a)*r,cy+Math.sin(a)*r]);}for(let i=0;i<=8;i++){const a=Math.PI/2+i/8*Math.PI;hp.push([cx-sw/2+r+Math.cos(a)*r,cy+Math.sin(a)*r]);}holes.push(hp);
+      fold(x,y0,x+W,y0);fold(x+W*.04,yr,x+W*.96,yr);}
+    for(const x of[xR,xL]){add([[x,y0],[x+D*.12,y0-D*.46],[x+D*.88,y0-D*.46],[x+D,y0]],bg);fold(x,y0,x+D,y0);}
+    // crash-lock bottom: the long flaps have the stepped lock edge, the short flaps a 45° glue edge
+    for(const[x,w,long]of[[xF,W,1],[xR,D,0],[xB,W,1],[xL,D,0]]){
+      if(long)add([[x,yb],[x,yb+D*.55],[x+w*.5,yb+D*.55],[x+w*.5+D*.2,yb+D*.35],[x+w,yb+D*.35],[x+w,yb]],bg);
+      else add([[x,yb],[x+D*.5,yb+D*.5],[x+D,yb+D*.5],[x+D,yb]],bg);
+      fold(x,yb,x+w,yb);}
+    for(const x of[xF,xR,xB,xL])fold(x,y0,x,yb);
+    band={x:xF,y:y0,w:2*W+2*D,h:H};TW=xE;TH=yb+D*.55;
   }else if(type==='drawer'){
     const G=clamp(D*.12,10,20),gap=15,t=spec.mat.t;
     add(R(0,0,H,D),bg,IMG('left',0,0,H,D,-90));add(R(H,0,W,D),bg,IMG('top',H,0,W,D));add(R(H+W,0,H,D),bg,IMG('right',H+W,0,H,D,90));add(R(2*H+W,0,W,D),bg,IMG('bottom',2*H+W,0,W,D,180));
@@ -1670,7 +1728,7 @@ function buildDieline(spec,P,F,geoOnly){
     TW=W+4*H;TH=yb+D+H;
   }
   if(geoOnly)return {geo:{pieces,folds,TW,TH,band:band||{x:0,y:0,w:TW,h:TH}}};
-  const urls={};const url=k=>urls[k]||(urls[k]=k==='tab'?F[k].toDataURL('image/png'):F[k].toDataURL('image/jpeg',.86));
+  const urls={};const url=k=>urls[k]||(urls[k]=k==='tab'||k==='handle'?F[k].toDataURL('image/png'):F[k].toDataURL('image/jpeg',.86));
   const onSeg=(p,f)=>{const[x1,y1,x2,y2]=f,e=.01;const cr=(x2-x1)*(p[1]-y1)-(y2-y1)*(p[0]-x1);if(Math.abs(cr)>e*Math.hypot(x2-x1,y2-y1))return false;return p[0]>=Math.min(x1,x2)-e&&p[0]<=Math.max(x1,x2)+e&&p[1]>=Math.min(y1,y2)-e&&p[1]<=Math.max(y1,y2)+e;};
   const f2=n=>Math.round(n*100)/100;
   let defs='',body='',cut='';const cuts=[];
@@ -1856,8 +1914,8 @@ const BOARDS={
   rigid20:{kind:'rigid',t:2,name:'합지 2mm (그레이보드+인쇄지)',short:'합지 2mm',inner:'#EDE9E2',kraft:false,desc:'천지함의 표준 두께예요. 선물·프리미엄 제품에 써요.'},
   rigid25:{kind:'rigid',t:2.5,name:'합지 2.5mm (그레이보드+인쇄지)',short:'합지 2.5mm',inner:'#EDE9E2',kraft:false,desc:'아주 단단해서 무거운 선물 세트도 버텨요.'}
 };
-const BOARD_FOR={hanger:['iv300','iv350','iv400','sc350','art300','kraft300'],drawer:['rigid15','rigid20','iv400','sc400'],lidbase:['rigid15','rigid20','rigid25'],tuck:['iv250','iv300','iv350','iv400','sc300','sc350','sc400','art300','kraft300'],mailer:['fflute','eflute','bflute'],rsc:['eflute','bflute','aflute','ebflute'],tent:['iv300','iv350','iv400','sc350','art300','kraft300']};
-const BOARD_DEF={hanger:'iv350',drawer:'rigid15',lidbase:'rigid20',tuck:'iv350',mailer:'eflute',rsc:'bflute',tent:'iv400'};
+const BOARD_FOR={hanger:['iv300','iv350','iv400','sc350','art300','kraft300'],drawer:['rigid15','rigid20','iv400','sc400'],lidbase:['rigid15','rigid20','rigid25'],tuck:['iv250','iv300','iv350','iv400','sc300','sc350','sc400','art300','kraft300'],mailer:['fflute','eflute','bflute'],rsc:['eflute','bflute','aflute','ebflute'],tent:['iv300','iv350','iv400','sc350','art300','kraft300'],handle:['iv350','iv400','sc350','sc400','kraft300']};
+const BOARD_DEF={hanger:'iv350',drawer:'rigid15',lidbase:'rigid20',tuck:'iv350',mailer:'eflute',rsc:'bflute',tent:'iv400',handle:'sc400'};
 const STOCK=[
   {n:'립밤 스틱 4.5g',cat:'beauty',c:['lipbalm','pp','gloss','twist'],d:[18,18,68],vol:'4.5g'},
   {n:'립스틱 케이스 3.5g',cat:'beauty',c:['lipbalm','abs','gloss','twist'],d:[22,22,85],vol:'3.5g'},
@@ -1938,7 +1996,7 @@ const AI_PROMPT=`너는 화장품·식품·생활용품 패키지 디자이너�
  "styles": ["minimal|vivid|kraft|luxury|natural|tech 중 어울리는 순서로 2~4개"],
  "palette": {"bg": "#RRGGBB", "ink": "#RRGGBB", "accent": "#RRGGBB"},
  "pattern": "none|lines|blocks|dots|waves|stripes|grid|leaves|blobs|arcs|deco",
- "box_type": "tuck|hanger|drawer|lidbase|rsc 중 이 제품에 맞는 상자. 사진 속 상자가 보이면 가장 비슷한 모양",
+ "box_type": "tuck|hanger|mailer|drawer|lidbase|rsc|tent|handle 중 이 제품에 맞는 상자. 사진 속 상자가 보이면 가장 비슷한 모양. tent는 바닥 위로 앞·뒤 두 면이 꼭대기에서 맞닿는 삼각 선물 상자(옆면이 V자로 접혀 들어가고 꼭대기를 리본으로 묶음), handle은 윗면에 손잡이가 달린 캐리 박스",
  "layout": "classic|minimal|giant|band|editorial 중 사진 속 앞면 배치와 가장 비슷한 것. minimal은 여백 많고 브랜드만 작게 있는 앞면",
  "leaflet": 0,
  "leaflet_text": "설명서에 들어갈 사용 방법·주의사항을 줄바꿈으로 구분해 3~6줄",
@@ -1980,7 +2038,7 @@ function applyAI(r,toDieline){
   const lf=+r.leaflet;if(lf>=2&&lf<=4){S.leaflet=lf;if(!['tuck','hanger'].includes(S.boxType))S.boxType='tuck';}
   if(r.leaflet_text)S.leafText=String(r.leaflet_text).slice(0,400);
   if(LAYOUTS[r.layout])S.layout=r.layout;
-  if(['tuck','hanger','drawer','lidbase','rsc'].includes(r.box_type)&&!(S.leaflet&&!['tuck','hanger'].includes(r.box_type)))S.boxType=r.box_type;
+  if(['tuck','hanger','mailer','drawer','lidbase','rsc','tent','handle'].includes(r.box_type)&&!(S.leaflet&&!['tuck','hanger'].includes(r.box_type)))S.boxType=r.box_type;
   aiStatus(`<b>${esc(ai.product||'제품')}</b>(으)로 봤어요. 크기·용기·스타일을 맞춰 ${toDieline?'<b>도면</b>을 만들었어요. 비슷한 시안은 레퍼런스 탭에 있어요.':'두고 레퍼런스를 만들었어요.'}`);
   rebuild();refreshGallery(true);showTab(toDieline?'pdl':'pref');
 }
@@ -2034,7 +2092,7 @@ function genConcepts(n,around){
     if(!around&&i<conts.length)cont=conts[i];
     const big=Math.max(S.w,S.d,S.h)>150;
     // mix real-world carton types instead of mostly the auto pick, and vary the front layout too
-    const kinds=big?['tuck','rsc','lidbase','drawer']:['tuck','hanger','drawer','lidbase'];
+    const kinds=big?['tuck','mailer','rsc','lidbase','drawer']:['tuck','hanger','mailer','drawer','lidbase','tent','handle'];
     const boxType=around&&rng()<.6?around.boxType:(i===0?'auto':kinds[(i+Math.floor(rng()*kinds.length))%kinds.length]);
     const layout=around&&rng()<.5?(around.layout||'classic'):pick(['classic','minimal','giant','band','editorial','classic']);
     out.push({id:uid(),style,palIdx,customColor,customPal,pattern,layout,boxType,seed:Math.floor(rng()*1e9),container:cont[0],material:cont[1],finish:cont[2],closure:cont[3],contColor:null,
@@ -2531,7 +2589,7 @@ $('#bgs').addEventListener('change',e=>{if(e.target.id==='sceneSel'){S.scene=e.t
 
 
 function setFold(on){S.foldMode=on;$('#foldB').classList.toggle('on',on);$('#foldB').textContent=on?'접기 모션 끄기':'접기 모션';$('#foldPlay').hidden=!on;$('#openLbl').textContent=on?'펼치기':'열기';$('#openB').hidden=on;R3.sizeKey=null;R3.open=R3.openTarget=on?1:0;$('#openR').value=R3.open;if(on)R3.viewTo={theta:R3.orbit.tt==null?R3.orbit.theta:R3.orbit.tt,phi:.72};else R3.viewTo={theta:R3.orbit.tt==null?R3.orbit.theta:R3.orbit.tt,phi:1.12};rebuild();if(on)setTimeout(()=>{R3.foldPlay={t0:performance.now()+500,dur:4200};},350);}
-$('#foldB').onclick=()=>{if(!S.foldMode&&current&&current.spec.type==='tent'){toast('삼각 리본 박스는 접기 모션이 아직 없어요. 박스 열기로 리본을 풀어 볼 수 있어요');return;}setFold(!S.foldMode);};
+$('#foldB').onclick=()=>{if(!S.foldMode&&current&&['tent','handle'].includes(current.spec.type)){toast(TYPES[current.spec.type].label.replace(/ \(.+\)/,'')+'는 접기 모션이 아직 없어요. 박스 열기로 여닫는 모습을 볼 수 있어요');return;}setFold(!S.foldMode);};
 $('#foldPlay').onclick=()=>{R3.open=1;R3.foldPlay={t0:performance.now(),dur:3600};};
 
 

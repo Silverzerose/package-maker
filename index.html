@@ -50,7 +50,7 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
 .chip em{font-style:normal;color:var(--muted);font-size:11px;margin-left:4px}
 .chip.on em{color:#bbb}
 .presets{margin-top:10px}
-.seg{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:auto;background:#F0EDE7;border-radius:11px;padding:3px;gap:3px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:auto;background:#F0EDE7;border-radius:11px;padding:3px;gap:3px}
 .seg button{border:0;background:transparent;border-radius:8px;padding:8px 0;font-size:12.5px;cursor:pointer;color:var(--muted)}
 .seg button.on{background:#fff;color:var(--ink);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .range{display:flex;align-items:center;gap:10px}
@@ -148,6 +148,28 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
 .legend i{display:inline-block;width:22px;height:0;border-top:2px solid #111;vertical-align:middle;margin-right:6px}
 .legend i.f{border-top:2px dashed #E5484D}
 .dlbtns{position:absolute;left:14px;right:14px;bottom:14px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+#pcom{background:var(--bg);border:0}
+.comwrap{position:absolute;inset:0;overflow:auto;padding:4px 2px 40px}
+.comup{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:14px}
+.comup-h b{font-size:15px;display:block}.comup-h span{font-size:12.5px;color:var(--muted);line-height:1.6}
+.comup-f{display:grid;grid-template-columns:1.2fr .8fr;gap:10px;margin-top:12px;align-items:end}
+.comup-f .field+.field{margin-top:0}.comnote{grid-column:1/2}
+.comup-a{display:flex;gap:8px}.comup-a .btn{flex:1}
+.comlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.wk{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.wk-imgs{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--line)}
+.wk-imgs figure{margin:0;position:relative;background:var(--soft);aspect-ratio:1/1}
+.wk-imgs figure.solo{grid-column:1/3;aspect-ratio:4/3}
+.wk-imgs img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.wk-imgs figcaption{position:absolute;left:8px;top:8px;font-size:10.5px;font-weight:700;background:rgba(24,24,27,.78);color:#fff;border-radius:999px;padding:2px 8px}
+.wk-b{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.wk-t{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.wk-t b{font-size:14px}.wk-t span{font-size:11px;color:var(--muted);white-space:nowrap}
+.wk-n{font-size:12.5px;color:#4a4742;line-height:1.55}
+.wk-how{border-top:1px dashed var(--line);padding-top:8px;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:12px}
+.wk-how dt{color:var(--muted)}.wk-how dd{margin:0;display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.wk-how i{width:14px;height:14px;border-radius:4px;border:1px solid rgba(0,0,0,.12);display:inline-block}
+.wk .btn{margin-top:auto}
+@media (max-width:920px){.comup-f{grid-template-columns:1fr}.comnote{grid-column:auto}}
 #pspec{background:#fff}
 .specwrap{position:absolute;inset:0;overflow:auto;padding:28px}
 .specgrid{display:grid;grid-template-columns:1.2fr 1fr;gap:28px;max-width:1000px}
@@ -351,12 +373,10 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
       <div class="seg" id="types">
         <button data-v="auto">자동 추천</button>
         <button data-v="tuck">턱엔드</button>
-        <button data-v="mailer">메일러</button>
         <button data-v="hanger">걸이형</button>
         <button data-v="drawer">서랍형</button>
         <button data-v="lidbase">천지함</button>
         <button data-v="rsc">택배박스</button>
-        <button data-v="tent">삼각 리본</button>
       </div>
       <div class="field" style="margin-top:12px"><label>상자 재질·두께</label><select id="board"></select></div>
       <div class="hint" id="boardHint"></div>
@@ -437,6 +457,7 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
       <button class="tab on" data-p="p3d">3D 목업</button>
       <button class="tab" data-p="pdl">칼선 도면</button>
       <button class="tab" data-p="pspec">사양서</button>
+      <button class="tab" data-p="pcom">모두의 작품</button>
       <span class="sp"></span>
     </div>
 
@@ -518,6 +539,23 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
         <button class="btn" id="dlPdf">PDF 저장</button>
         <button class="btn" id="dlZip">도면 파일 (PDF·SVG·DXF)</button>
         <button class="btn dark psdBtn" id="dlPsd">PSD·AI 내보내기</button>
+      </div>
+    </div>
+
+    <div class="pane" id="pcom">
+      <div class="comwrap">
+        <div class="comup">
+          <div class="comup-h"><b>내 작품 올리기</b><span>올린 사진과 지금 만든 목업, 디자인 설정(상자 형태·크기·색·레이아웃·패턴)이 함께 올라가요. 누구나 볼 수 있어요.</span></div>
+          <div class="comup-f">
+            <div class="field"><label for="comTitle">작품 이름</label><input type="text" id="comTitle" maxlength="60" placeholder="예: MUUT 안경점 선물 상자"></div>
+            <div class="field"><label for="comAuthor">올린 사람 <span style="opacity:.7">(선택)</span></label><input type="text" id="comAuthor" maxlength="24" placeholder="닉네임"></div>
+            <div class="field comnote"><label for="comNote">한 줄 메모 <span style="opacity:.7">(선택)</span></label><input type="text" id="comNote" maxlength="300" placeholder="참고한 점, 고민한 점"></div>
+            <div class="comup-a"><label class="btn" for="comPhoto" id="comPhotoL">참고 사진 고르기</label><input type="file" id="comPhoto" accept="image/jpeg,image/png,image/webp" hidden><button class="btn primary" id="comSend">올리기</button></div>
+          </div>
+          <div class="hint" id="comHint">사진 없이 올리면 목업만 올라가요. 사진은 3MB 이하로 줄여서 올려요.</div>
+        </div>
+        <div class="comlist" id="comList"></div>
+        <div class="more"><button class="btn" id="comMore" hidden>더 보기</button></div>
       </div>
     </div>
 
@@ -632,23 +670,25 @@ function autoType(p,cat){
   const mx=Math.max(p.w,p.d,p.h), mn=Math.min(p.w,p.d);
   if(mx>350) return 'rsc';
   if(cat==='gift') return 'lidbase';
-  if(p.h<=mn*.5) return 'mailer';
-  if(cat==='apparel'&&p.h<=mn*.75) return 'mailer';
+  if(p.h<=mn*.5) return 'lidbase';
+  if(cat==='apparel'&&p.h<=mn*.75) return 'lidbase';
   return 'tuck';
 }
+const REMOVED_TYPES=new Set(['mailer','tent']); // taken out of the app; old saved designs fall back to the automatic pick
 function computeSpec(st){st=st||S;
   const p={w:st.w,d:st.d,h:st.h};
-  const type=st.boxType==='auto'?autoType(p,st.cat):st.boxType;
+  const bt=REMOVED_TYPES.has(st.boxType)||!TYPES[st.boxType]?'auto':st.boxType;
+  const type=bt==='auto'?autoType(p,st.cat):bt;
   const bk=st.board&&BOARD_FOR[type].includes(st.board)?st.board:BOARD_DEF[type];
   const mat=Object.assign({key:bk},BOARDS[bk]), c=st.clearance, t=mat.t;
   const inner={w:p.w+2*c,d:p.d+2*c,h:p.h+2*c};
   const outer=type==='drawer'?{w:inner.w+4*t+1,d:inner.d+2*t,h:inner.h+4*t+1}:{w:inner.w+2*t,d:inner.d+2*t,h:inner.h+2*t};
   const tabH=clamp(outer.w*.45,25,45),lidH=clamp(outer.h*.33,12,45);
   const mx=Math.max(p.w,p.d,p.h), why=[];
-  if(st.boxType==='auto'){
+  if(bt==='auto'){
     if(type==='rsc') why.push(`가장 긴 변이 ${r1(mx)}mm로 커서, 무게와 충격을 잘 버티는 골판지 택배 박스를 골랐어요.`);
     else if(type==='mailer') why.push(st.cat==='apparel'&&p.h>Math.min(p.w,p.d)*.5?'의류는 접어서 넣기 좋은 메일러 박스가 포장과 언박싱 모두 편해요.':`높이(${r1(p.h)}mm)가 가로·세로보다 많이 낮은 납작한 제품이라, 택배 발송과 언박싱에 좋은 메일러 박스를 골랐어요.`);
-    else if(type==='lidbase') why.push('선물·프리미엄 제품이라 뚜껑과 바닥이 나뉜 단단한 천지함(합지 박스)을 골랐어요.');
+    else if(type==='lidbase') why.push(st.cat==='gift'?'선물·프리미엄 제품이라 뚜껑과 바닥이 나뉜 단단한 천지함(합지 박스)을 골랐어요.':`높이(${r1(p.h)}mm)가 낮은 납작한 제품이라, 뚜껑을 들어 올려 여는 천지함을 골랐어요.`);
     else why.push('세워서 진열하는 제품이라, 매장과 온라인에서 가장 흔히 쓰는 리버스 턱엔드 박스를 골랐어요.');
   } else why.push('직접 고른 박스 형태를 쓰고 있어요.');
   why.push(`제품 사방에 ${c}mm 여유를 두고 재질 두께 ${t}mm를 더해 바깥 치수를 계산했어요.`);
@@ -1898,7 +1938,7 @@ const AI_PROMPT=`너는 화장품·식품·생활용품 패키지 디자이너�
  "styles": ["minimal|vivid|kraft|luxury|natural|tech 중 어울리는 순서로 2~4개"],
  "palette": {"bg": "#RRGGBB", "ink": "#RRGGBB", "accent": "#RRGGBB"},
  "pattern": "none|lines|blocks|dots|waves|stripes|grid|leaves|blobs|arcs|deco",
- "box_type": "tuck|hanger|mailer|drawer|lidbase|rsc|tent 중 이 제품에 맞는 상자. 사진 속 상자가 보이면 그 모양. tent는 두 면이 위에서 만나는 삼각기둥(텐트) 모양 상자로, 보통 꼭대기에 리본을 묶어요",
+ "box_type": "tuck|hanger|drawer|lidbase|rsc 중 이 제품에 맞는 상자. 사진 속 상자가 보이면 가장 비슷한 모양",
  "layout": "classic|minimal|giant|band|editorial 중 사진 속 앞면 배치와 가장 비슷한 것. minimal은 여백 많고 브랜드만 작게 있는 앞면",
  "leaflet": 0,
  "leaflet_text": "설명서에 들어갈 사용 방법·주의사항을 줄바꿈으로 구분해 3~6줄",
@@ -1940,7 +1980,7 @@ function applyAI(r,toDieline){
   const lf=+r.leaflet;if(lf>=2&&lf<=4){S.leaflet=lf;if(!['tuck','hanger'].includes(S.boxType))S.boxType='tuck';}
   if(r.leaflet_text)S.leafText=String(r.leaflet_text).slice(0,400);
   if(LAYOUTS[r.layout])S.layout=r.layout;
-  if(['tuck','hanger','mailer','drawer','lidbase','rsc','tent'].includes(r.box_type)&&!(S.leaflet&&!['tuck','hanger'].includes(r.box_type)))S.boxType=r.box_type;
+  if(['tuck','hanger','drawer','lidbase','rsc'].includes(r.box_type)&&!(S.leaflet&&!['tuck','hanger'].includes(r.box_type)))S.boxType=r.box_type;
   aiStatus(`<b>${esc(ai.product||'제품')}</b>(으)로 봤어요. 크기·용기·스타일을 맞춰 ${toDieline?'<b>도면</b>을 만들었어요. 비슷한 시안은 레퍼런스 탭에 있어요.':'두고 레퍼런스를 만들었어요.'}`);
   rebuild();refreshGallery(true);showTab(toDieline?'pdl':'pref');
 }
@@ -1994,7 +2034,7 @@ function genConcepts(n,around){
     if(!around&&i<conts.length)cont=conts[i];
     const big=Math.max(S.w,S.d,S.h)>150;
     // mix real-world carton types instead of mostly the auto pick, and vary the front layout too
-    const kinds=big?['tuck','mailer','rsc','lidbase','drawer']:['tuck','hanger','mailer','drawer','lidbase','tent'];
+    const kinds=big?['tuck','rsc','lidbase','drawer']:['tuck','hanger','drawer','lidbase'];
     const boxType=around&&rng()<.6?around.boxType:(i===0?'auto':kinds[(i+Math.floor(rng()*kinds.length))%kinds.length]);
     const layout=around&&rng()<.5?(around.layout||'classic'):pick(['classic','minimal','giant','band','editorial','classic']);
     out.push({id:uid(),style,palIdx,customColor,customPal,pattern,layout,boxType,seed:Math.floor(rng()*1e9),container:cont[0],material:cont[1],finish:cont[2],closure:cont[3],contColor:null,
@@ -2065,7 +2105,7 @@ function applyConcept(c){
   if(R3.orbit){R3.viewTo={theta:c.theta,phi:c.phi};R3.openTarget=c.open;$('#openR').value=c.open;$('#openB').textContent=c.open>.5?'박스 닫기':'박스 열기';}
   rebuild();showTab('p3d');toast('이 레퍼런스로 바꿨어요. 왼쪽에서 더 다듬어 보세요');
 }
-function showTab(id){$$('.tab').forEach(x=>x.classList.toggle('on',x.dataset.p===id));$$('.pane').forEach(p=>p.classList.toggle('on',p.id===id));if(id==='pref'&&!G.started)refreshGallery(true);}
+function showTab(id){$$('.tab').forEach(x=>x.classList.toggle('on',x.dataset.p===id));$$('.pane').forEach(p=>p.classList.toggle('on',p.id===id));if(id==='pref'&&!G.started)refreshGallery(true);if(id==='pcom'&&!COM.loaded)loadCom(true);}
 function renderContUI(P){
   const C=resolveCont(S);
   $('#conts').innerHTML=[['auto','자동']].concat(Object.keys(CONT).map(k=>[k,CONT[k].label])).map(([k,l])=>`<button class="ct${(S.container||'auto')===k?' on':''}" data-v="${k}">${svgIcon(k)}<span>${l}</span>${k==='auto'?`<em>${CONT[C.type].label}</em>`:''}</button>`).join('');
@@ -2433,7 +2473,9 @@ function curBg(){const sc=SCENES[S.scene];return sc&&sc.bg?{a:sc.bg[0],b:sc.bg[1
 function sceneBgTex(){const g=curBg(),k=g.a+g.b;if(bgTexCache[k])return bgTexCache[k];const c=makeCanvas(4,256),x=c.getContext('2d'),gr=x.createLinearGradient(0,0,0,256);gr.addColorStop(0,g.a);gr.addColorStop(1,g.b);x.fillStyle=gr;x.fillRect(0,0,4,256);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return bgTexCache[k]=t;}
 function hiSnapshot(scale){const r=R3.renderer,pr=r.getPixelRatio(),el=r.domElement,w=el.clientWidth||800,h=el.clientHeight||600;r.setPixelRatio(pr*scale);r.setSize(w,h,false);const prev=R3.scene.background;R3.scene.background=sceneBgTex();R3.dimG&&(R3.dimG.visible=false);
   r.render(R3.scene,R3.camera);const c=makeCanvas(el.width,el.height);c.getContext('2d').drawImage(el,0,0);R3.scene.background=prev;R3.dimG&&(R3.dimG.visible=R3.showDims!==false);r.setPixelRatio(pr);r.setSize(w,h,false);return c;}
-async function saveBlob(name,data){const dl=await getDL();if(!dl){modal('파일 저장','<div style="max-width:520px;line-height:1.7;font-size:14px">파일은 다 만들었지만, 지금 보고 있는 화면에서는 저장이 막혀 있어요.<br>claude.ai에서 이 페이지를 열어 다시 눌러 주세요.</div>','');return false;}
+async function saveBlob(name,data){const dl=await getDL();if(!dl){// outside claude.ai (e.g. GitHub Pages): a normal browser download
+    try{const b=data instanceof Blob?data:new Blob([data]);const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);toast('내려받기를 시작했어요');return true;}
+    catch(e){modal('파일 저장','<div style="max-width:520px;line-height:1.7;font-size:14px">이 브라우저에서는 파일을 저장하지 못했어요. 다른 브라우저(크롬·엣지)로 열어 다시 눌러 주세요.</div>','');return false;}}
   try{await dl.save({filename:name,data});toast('저장했어요');return true;}catch(e){const c=e&&e.code;toast(c==='declined'?'저장을 취소했어요':c==='rate_limited'?'잠시 후 다시 눌러 주세요':'저장하지 못했어요'+(c?` (${c})`:''));return false;}}
 const baseName=()=>safeName(`${current.P.text.brand}_${current.P.text.name}`);
 async function recordVideo(){
@@ -2548,6 +2590,56 @@ $('#expAI').onclick=async()=>{
     E.on=true;st.innerHTML='채웠어요. 내용, 특히 <b>INCI 성분명은 성분사전과 꼭 대조</b>해 주세요.'+(/\*/.test(E.ingr||'')?' * 표시는 AI가 확실하지 않은 성분이에요.':'');renderExpUI();rebuild();}
   catch(e){const c=e&&e.code;st.textContent=c==='not_granted'||c==='sampling_disabled'?'Claude 사용이 허용되지 않아 채우지 못했어요.':c==='rate_limited'?'요청이 많아요. 잠시 후 다시 눌러 주세요.':'채우지 못했어요. 다시 눌러 주세요.';}
   finally{btn.disabled=false;}};
+
+/* ---------------- shared gallery ("모두의 작품", stored in Supabase) ---------------- */
+// The anon key is a public key by design: the table and bucket rules (supabase-setup.sql) only allow reading and adding.
+const SUPA={url:'https://dvbdmrhyfebhcmjugzvm.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2YmRtcmh5ZmViaGNtanVnenZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUyMzA1MzgsImV4cCI6MjExMDgwNjUzOH0.jSAf5C4tRmyqmVOI08WhUEN-briB0OBQOD7BV-g2_E4'};
+const COM={loaded:false,items:[],offset:0,page:24,photo:null};
+const SAVE_KEYS=['w','d','h','cat','brand','name','tag','en','volume','boxType','style','palIdx','customPal','customColor','pattern','layout','seed','container','material','finish','closure','contColor','fx','coat','board','clearance','leaflet','insideColor','scene','bg','fontHead','fontBody'];
+const supaOn=()=>!!(SUPA.url&&SUPA.key);
+const supaH=extra=>Object.assign({apikey:SUPA.key,Authorization:'Bearer '+SUPA.key},extra||{});
+const pubURL=p=>`${SUPA.url}/storage/v1/object/public/gallery/${p.split('/').map(encodeURIComponent).join('/')}`;
+async function supaUpload(path,blob){const r=await fetch(`${SUPA.url}/storage/v1/object/gallery/${path}`,{method:'POST',headers:supaH({'Content-Type':blob.type||'image/jpeg','x-upsert':'false'}),body:blob});if(!r.ok)throw new Error('upload '+r.status);return path;}
+function shrink(src,max,q){return new Promise(res=>{const img=new Image();img.onload=()=>{const s=Math.min(1,max/Math.max(img.width,img.height)),c=makeCanvas(img.width*s,img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);c.toBlob(res,'image/jpeg',q);};img.onerror=()=>res(null);img.src=src;});}
+function canvasBlob(c,max,q){const s=Math.min(1,max/Math.max(c.width,c.height)),d=makeCanvas(c.width*s,c.height*s);d.getContext('2d').drawImage(c,0,0,d.width,d.height);return new Promise(r=>d.toBlob(r,'image/jpeg',q));}
+function ago(t){const s=(Date.now()-new Date(t).getTime())/1000;return s<3600?`${Math.max(1,Math.round(s/60))}분 전`:s<86400?`${Math.round(s/3600)}시간 전`:`${Math.round(s/86400)}일 전`;}
+function howHTML(d){const v=d.view||{},st=d.state||{},sw=c=>`<i style="background:${esc(c)}"></i>`;
+  const rows=[['상자',esc((TYPES[v.type]||{}).label||'')],['크기',`${r1(+st.w||0)} × ${r1(+st.d||0)} × ${r1(+st.h||0)} mm`],['스타일',esc(((STY[v.style]||{}).label||'')+(v.layout?' · '+(LAYOUTS[v.layout]||''):''))],['패턴',esc(PAT[v.pattern]||'')],
+    ['컬러',v.pal?[v.pal.bg,v.pal.ink,v.pal.acc].filter(c=>/^#[0-9a-f]{6}$/i.test(c)).map(c=>sw(c)+`<span>${c}</span>`).join(' '):''],['용기',esc(v.cont||'')],['후가공',esc(v.fx||'')]];
+  return `<dl class="wk-how">${rows.filter(r=>r[1]).map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('')}</dl>`;}
+function wkHTML(it,i){const ph=it.photo_path&&it.photo_path!=='-'?pubURL(it.photo_path):null,mk=it.mockup_path?pubURL(it.mockup_path):null;
+  const fig=(u,cap,solo)=>u?`<figure class="${solo?'solo':''}"><img src="${u}" alt="${cap}" loading="lazy" data-zoom="${u}"><figcaption>${cap}</figcaption></figure>`:'';
+  return `<div class="wk"><div class="wk-imgs">${fig(ph,'참고 사진',!mk)}${fig(mk,'만든 목업',!ph)}</div><div class="wk-b">
+    <div class="wk-t"><b>${esc(it.title)}</b><span>${esc(it.author||'익명')} · ${ago(it.created_at)}</span></div>${it.note?`<div class="wk-n">${esc(it.note)}</div>`:''}
+    ${howHTML(it.design||{})}<button class="btn sm" data-open="${i}">이 설정으로 열어서 고쳐 보기</button></div></div>`;}
+async function loadCom(reset){
+  const list=$('#comList');COM.loaded=true;
+  if(!supaOn()){list.innerHTML='<div class="empty">공유 갤러리가 아직 연결되지 않았어요.</div>';$('#comSend').disabled=true;return;}
+  if(reset){COM.items=[];COM.offset=0;list.innerHTML='<div class="empty">불러오는 중…</div>';}
+  try{const r=await fetch(`${SUPA.url}/rest/v1/gallery?select=*&order=created_at.desc&limit=${COM.page}&offset=${COM.offset}`,{headers:supaH()});if(!r.ok)throw new Error(r.status);
+    const rows=await r.json();COM.items.push(...rows);COM.offset+=rows.length;
+    list.innerHTML=COM.items.length?COM.items.map(wkHTML).join(''):'<div class="empty">아직 올라온 작품이 없어요. 첫 작품을 올려 보세요.</div>';$('#comMore').hidden=rows.length<COM.page;}
+  catch(e){list.innerHTML='<div class="empty">작품을 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.</div>';}}
+async function sendCom(){
+  if(!supaOn()||!current)return;const title=$('#comTitle').value.trim();if(!title){toast('작품 이름을 적어 주세요');$('#comTitle').focus();return;}
+  const btn=$('#comSend');btn.disabled=true;work('작품을 올리는 중…');
+  try{const id=(crypto.randomUUID?crypto.randomUUID():uid()),day=new Date().toISOString().slice(0,10);
+    const mk=await canvasBlob(hiSnapshot(1),1400,.86);const mockup_path=mk?await supaUpload(`${day}/${id}-mockup.jpg`,mk):null;
+    let photo_path='-';const src=COM.photo||G.photoURL;if(src){const pb=await shrink(src,1400,.86);if(pb)photo_path=await supaUpload(`${day}/${id}-photo.jpg`,pb);}
+    const {spec,P}=current,state={};for(const k of SAVE_KEYS)if(S[k]!==undefined&&S[k]!==null)state[k]=S[k];
+    const view={type:spec.type,style:P.style,layout:P.layout,pattern:P.pattern,pal:P.pal,cont:spec.cont.type!=='box'?`${CONT[spec.cont.type].label} · ${MATL[spec.cont.mat]} ${FIN[spec.cont.fin]}`:'',fx:FXL[P.fx]&&P.fx!=='none'?FXL[P.fx]:''};
+    const body={title,author:$('#comAuthor').value.trim()||null,note:$('#comNote').value.trim()||null,photo_path,mockup_path,design:{state,view}};
+    const r=await fetch(`${SUPA.url}/rest/v1/gallery`,{method:'POST',headers:supaH({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(body)});if(!r.ok)throw new Error('insert '+r.status);
+    $('#comTitle').value='';$('#comNote').value='';COM.photo=null;$('#comPhotoL').textContent='참고 사진 고르기';toast('올렸어요');await loadCom(true);}
+  catch(e){toast('올리지 못했어요. 사진이 너무 크거나 연결이 끊겼을 수 있어요');}
+  finally{work(null);btn.disabled=false;}}
+$('#comSend').onclick=sendCom;
+$('#comMore').onclick=()=>loadCom(false);
+$('#comPhoto').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const rd=new FileReader();rd.onload=()=>{COM.photo=rd.result;$('#comPhotoL').textContent='사진: '+f.name.slice(0,18);};rd.readAsDataURL(f);});
+$('#comList').addEventListener('click',e=>{const z=e.target.closest('[data-zoom]');if(z){modal('크게 보기',`<img src="${z.dataset.zoom}" alt="">`,'');return;}
+  const b=e.target.closest('[data-open]');if(!b)return;const it=COM.items[+b.dataset.open];const st=(it&&it.design&&it.design.state)||{};
+  for(const k of SAVE_KEYS)if(k in st)S[k]=st[k];edited.brand=edited.name=true;if(S.scene==='plain'){const g=BGS[S.bg||0];$('#p3d').style.background=`linear-gradient(${g.a},${g.b})`;}if($('#sceneSel'))$('#sceneSel').value=S.scene;applyScene();
+  rebuild();showTab('p3d');toast(`"${it.title}" 설정을 불러왔어요. 왼쪽에서 바꿔 보세요`);});
 
 initThree();
 rebuild();

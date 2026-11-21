@@ -407,6 +407,7 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
       <select id="layoutSel"><option value="auto">자동 (가운데 정렬)</option><option value="classic">가운데 정렬</option><option value="minimal">미니멀 (브랜드만, 여백 크게)</option><option value="giant">큰 글자 (브랜드를 크게 잘라 넣기)</option><option value="band">컬러 띠</option><option value="editorial">에디토리얼 (왼쪽 정렬)</option></select>
       <div class="grid2">
         <div class="field"><label>후가공 (브랜드·제품명)</label><select id="fxSel"><option value="none">없음</option><option value="gold">금박</option><option value="silver">은박</option><option value="rose">로즈골드박</option><option value="emboss">형압 (엠보싱)</option><option value="spotuv">부분 UV (유광)</option></select></div>
+        <div class="field" style="grid-column:1/3"><label>인쇄 색 모드</label><select id="cmSel"><option value="cmyk">CMYK (인쇄용, 기본)</option><option value="rgb">RGB (화면·웹용)</option></select></div>
         <div class="field"><label>코팅</label><select id="coatSel"><option value="matte">무광 코팅</option><option value="gloss">유광 코팅</option><option value="soft">소프트터치 (벨벳)</option></select></div>
       </div>
       <div class="sub">로고 (선택)</div>
@@ -674,7 +675,7 @@ const UNIT={mm:1,cm:10,in:25.4};
 const BGS=[{a:'#F7F5F1',b:'#E8E4DC'},{a:'#EEF1F4',b:'#D9DEE4'},{a:'#F4EEE6',b:'#E2D4C2'},{a:'#E9F1EC',b:'#CFE0D5'},{a:'#2A2A2E',b:'#121214'}];
 
 /* ---------------- state ---------------- */
-const S={exp:{on:false,descEn:'',pao:'12M',bestBefore:'',multi:'',langs:[],nameEn:'',netNum:'',netUnit:'mL',dir:'',warn:'',ingr:'',ingrKo:'',mfr:'',mfrAddr:'',usrp:'',usrpAddr:'',web:'',madeKr:true,ukrp:'',ukrpAddr:'',eurp:'',eurpAddr:''},sheetImg:null,sheetPlain:true,customPal:null,leaflet:0,leafText:'',sheetT:{s:1,x:0,y:0},foldMode:false,fx:'none',coat:'matte',insideColor:'',scene:'wood',board:null,volume:'',en:'',desc:'',barcode:'',fontHead:'auto',fontBody:'auto',faceImg:{},container:'auto',material:null,finish:null,closure:null,contColor:null,unit:'mm',w:40,d:40,h:125,cat:'beauty',brand:CATS.beauty.brand,name:CATS.beauty.name,tag:'',boxType:'auto',style:'auto',palIdx:null,pattern:'auto',layout:'auto',customColor:null,clearance:2,seed:7,logo:null,showProduct:true,bg:0};
+const S={exp:{on:false,descEn:'',pao:'12M',bestBefore:'',multi:'',langs:[],nameEn:'',netNum:'',netUnit:'mL',dir:'',warn:'',ingr:'',ingrKo:'',mfr:'',mfrAddr:'',usrp:'',usrpAddr:'',web:'',madeKr:true,ukrp:'',ukrpAddr:'',eurp:'',eurpAddr:''},sheetImg:null,sheetPlain:true,customPal:null,leaflet:0,leafText:'',colorMode:'cmyk',sheetT:{s:1,x:0,y:0},foldMode:false,fx:'none',coat:'matte',insideColor:'',scene:'wood',board:null,volume:'',en:'',desc:'',barcode:'',fontHead:'auto',fontBody:'auto',faceImg:{},container:'auto',material:null,finish:null,closure:null,contColor:null,unit:'mm',w:40,d:40,h:125,cat:'beauty',brand:CATS.beauty.brand,name:CATS.beauty.name,tag:'',boxType:'auto',style:'auto',palIdx:null,pattern:'auto',layout:'auto',customColor:null,clearance:2,seed:7,logo:null,showProduct:true,bg:0};
 const edited={brand:false,name:false};
 
 /* ---------------- spec ---------------- */
@@ -1853,7 +1854,8 @@ function renderSpec(spec,P,urls){
   <tr><td>전개 사이즈</td><td>${r1(spec.sheet.w)} × ${r1(spec.sheet.h)} mm <span style="color:var(--muted)">(칼선 기준, 재단 여유 제외)</span></td></tr>
   <tr><td>제품 용기</td><td><b>${CONT[spec.cont.type].label}</b>${spec.cont.type!=='box'?` · ${MATL[spec.cont.mat]} ${FIN[spec.cont.fin]} · ${CLO[spec.cont.cl]}`:''}</td></tr>
   <tr><td>디자인</td><td>${STY[P.style].label} 스타일 · ${PAT[P.pattern]} 패턴</td></tr>
-  <tr><td>컬러</td><td><div class="sw3"><span><i style="background:${pal.bg}"></i>${pal.bg}</span><span><i style="background:${pal.ink}"></i>${pal.ink}</span><span><i style="background:${pal.acc}"></i>${pal.acc}</span></div></td></tr>
+  <tr><td>컬러</td><td><div class="sw3" style="flex-wrap:wrap">${[pal.bg,pal.ink,pal.acc].map(c=>`<span><i style="background:${c}"></i>${c}<em style="font-style:normal;color:var(--muted)">${cmykText(c)}</em></span>`).join("")}</div></td></tr>
+  <tr><td>색 모드</td><td>${S.colorMode==="rgb"?"RGB (화면용)":"<b>CMYK (인쇄용)</b> · PDF·AI는 CMYK, 칼선은 별색 CutContour, 접는 선은 별색 Crease"}</td></tr>
   </table></div><div>
   <div class="card"><h4>이렇게 골랐어요</h4><ul>${spec.why.map(w=>`<li>${esc(w)}</li>`).join('')}<li>${CATS[S.cat].label} 제품에 어울리는 ${STY[P.style].label} 스타일로 아트워크를 만들었어요.</li></ul></div>
   <div class="card"><h4>용기 추천 옵션</h4><ul>${(G.ai&&G.ai.containers.length?G.ai.containers:contChoices().slice(0,4).map(a=>({type:a[0],mat:a[1],fin:a[2],cl:a[3],why:''}))).map(c=>`<li><b>${CONT[c.type].label}</b> — ${MATL[c.mat]} ${FIN[c.fin]}, ${CLO[c.cl]}${c.why?`<br><span style="color:var(--muted)">${esc(c.why)}</span>`:(MATL_DESC[c.mat]?`<br><span style="color:var(--muted)">${MATL_DESC[c.mat]}</span>`:'')}</li>`).join('')}</ul></div>
@@ -1884,7 +1886,7 @@ function renderControls(P){
   renderContUI(P);
   const sp=current?current.spec:computeSpec();const bs=$('#board');bs.innerHTML=BOARD_FOR[sp.type].map(k=>`<option value="${k}">${BOARDS[k].name}</option>`).join('');bs.value=sp.mat.key;
   $('#leafSel').value=String(S.leaflet||0);$('#leafB').hidden=!(current&&current.spec.leaflet);
-  $('#fxSel').value=S.fx;$('#coatSel').value=S.coat;$('#inSel').value=S.insideColor||'';
+  $('#fxSel').value=S.fx;$('#cmSel').value=S.colorMode==='rgb'?'rgb':'cmyk';$('#coatSel').value=S.coat;$('#inSel').value=S.insideColor||'';
   $('#boardHint').innerHTML=`<b>${sp.mat.short}</b> — ${sp.mat.desc}${sp.mat.kind==='paper'?' <br>IV는 아이보리지(흰색 판지)의 줄임말이고, 250~400g은 1㎡당 무게예요. 숫자가 클수록 두껍고 단단해요.':''}`;
 }
 
@@ -2727,7 +2729,36 @@ function makeDXF(geo){
   geo.cuts.forEach(c=>ln('CUT',...c));geo.folds.forEach(f=>ln('CREASE',...f));a(0,'ENDSEC',0,'EOF');return L.join('\r\n');
 }
 function svgToCanvas(svg,scale){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const vb=svg.match(/viewBox="([^"]+)"/)[1].split(' ').map(Number);const c=makeCanvas(vb[2]*scale,vb[3]*scale),x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);res(c);};img.onerror=rej;img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg.replace(/width="[^"]+mm" height="[^"]+mm"/,''));});}
-async function buildDielineFiles(withZip,single){
+/* ---------------- CMYK: colour values and a CMYK print PDF writer ---------------- */
+// Plain RGB -> CMYK with grey-component replacement and a 300% total-ink cap (no ICC profile in the browser).
+function rgb2cmyk(r,g,b){r/=255;g/=255;b/=255;const k=1-Math.max(r,g,b);if(k>=.999)return[0,0,0,1];let c=(1-r-k)/(1-k),m=(1-g-k)/(1-k),y=(1-b-k)/(1-k);
+  const tot=c+m+y+k;if(tot>3){const f=(3-k)/(c+m+y);c*=f;m*=f;y*=f;}return[c,m,y,k];}
+const cmykText=h=>{const[r,g,b]=hex2rgb(h),q=rgb2cmyk(r,g,b).map(v=>Math.round(v*100));return`C${q[0]} M${q[1]} Y${q[2]} K${q[3]}`;};
+async function deflate(u8){const cs=new CompressionStream('deflate'),w=cs.writable.getWriter();w.write(u8);w.close();return new Uint8Array(await new Response(cs.readable).arrayBuffer());}
+// One page per entry: {img: canvas|null, cuts, folds} in mm with a margin M0; image stored as DeviceCMYK, lines as spot colours.
+async function cmykPdf(pages,Wm,Hm,M0){
+  const pt=v=>(v*72/25.4).toFixed(3),Wp=pt(Wm),Hp=pt(Hm),enc=new TextEncoder(),objs=[];const add=b=>{objs.push(b);return objs.length;};
+  const sep=(name,c)=>`[/Separation /${name} /DeviceCMYK << /FunctionType 2 /Domain [0 1] /C0 [0 0 0 0] /C1 [${c.join(' ')}] /N 1 >>]`;
+  const pageIds=[],parentId=1;objs.push(null);
+  for(const pg of pages){let imgRef='',imgName='';
+    if(pg.img){let c=pg.img;const maxW=Math.round(Wm/25.4*300);if(c.width>maxW*1.05){const s2=makeCanvas(maxW,Math.round(c.height*maxW/c.width));s2.getContext('2d').drawImage(c,0,0,s2.width,s2.height);c=s2;}// 300 dpi is plenty for print
+      const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data,out=new Uint8Array(c.width*c.height*4);
+      for(let i=0,j=0;i<d.length;i+=4,j+=4){const q=rgb2cmyk(d[i],d[i+1],d[i+2]);out[j]=q[0]*255;out[j+1]=q[1]*255;out[j+2]=q[2]*255;out[j+3]=q[3]*255;}
+      const z=await deflate(out);const head=enc.encode(`<< /Type /XObject /Subtype /Image /Width ${c.width} /Height ${c.height} /ColorSpace /DeviceCMYK /BitsPerComponent 8 /Filter /FlateDecode /Length ${z.length} >>\nstream\n`);
+      imgRef=add([head,z,enc.encode('\nendstream')]);imgName='/Im0';}
+    const Y=v=>pt(Hm-(v+M0)),X=v=>pt(v+M0);let s='';
+    if(imgName)s+=`q ${Wp} 0 0 ${Hp} 0 0 cm ${imgName} Do Q\n`;
+    s+=`/CS0 CS 1 SCN ${pt(.25)} w [] 0 d\n`+pg.cuts.map(c=>`${X(c[0])} ${Y(c[1])} m ${X(c[2])} ${Y(c[3])} l S`).join('\n')+'\n';
+    s+=`/CS1 CS 1 SCN [${pt(2)} ${pt(1.5)}] 0 d\n`+pg.folds.map(f=>`${X(f[0])} ${Y(f[1])} m ${X(f[2])} ${Y(f[3])} l S`).join('\n')+'\n';
+    const cz=await deflate(enc.encode(s));const cont=add([enc.encode(`<< /Length ${cz.length} /Filter /FlateDecode >>\nstream\n`),cz,enc.encode('\nendstream')]);
+    const res=`<< /ColorSpace << /CS0 ${sep('CutContour',[0,1,0,0])} /CS1 ${sep('Crease',[1,0,0,0])} >>${imgRef?` /XObject << /Im0 ${imgRef} 0 R >>`:''} >>`;
+    pageIds.push(add(`<< /Type /Page /Parent ${parentId} 0 R /MediaBox [0 0 ${Wp} ${Hp}] /TrimBox [${pt(M0)} ${pt(M0)} ${pt(Wm-M0)} ${pt(Hm-M0)}] /Resources ${res} /Contents ${cont} 0 R >>`));}
+  objs[0]=`<< /Type /Pages /Kids [${pageIds.map(i=>i+' 0 R').join(' ')}] /Count ${pageIds.length} >>`;
+  const cat=add(`<< /Type /Catalog /Pages 1 0 R >>`),info=add(`<< /Producer (Package Maker - CMYK) /Title (Dieline) >>`);
+  const parts=[enc.encode('%PDF-1.6\n%\xE2\xE3\xCF\xD3\n')],offs=[];let pos=parts[0].length;
+  objs.forEach((o,i)=>{offs.push(pos);const body=Array.isArray(o)?o:[enc.encode(o)];const h=enc.encode(`${i+1} 0 obj\n`),t=enc.encode('\nendobj\n');parts.push(h,...body,t);pos+=h.length+body.reduce((a,b)=>a+b.length,0)+t.length;});
+  const xref=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`+offs.map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<< /Size ${objs.length+1} /Root ${cat} 0 R /Info ${info} 0 R >>\nstartxref\n${pos}\n%%EOF`;
+  parts.push(enc.encode(xref));return new Blob(parts,{type:'application/pdf'});}async function buildDielineFiles(withZip,single){
   if(!window.jspdf)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   const geo=current.spec.geo,vb=lastSVG.match(/viewBox="([^"]+)"/)[1].split(' ').map(Number),M0=-vb[0],Wm=vb[2],Hm=vb[3];
   const art=lastSVG.replace(/<path d="[^"]*" fill="none" stroke="#(111|E5484D)"[^>]*\/>/g,'').replace(/<g stroke="#8A857D"[\s\S]*?<\/g>/,'').replace(/<g fill="#5E5A53"[\s\S]*?<\/g>/,'').replace(/<g class="hits">[\s\S]*?<\/g>/,'');
@@ -2737,7 +2768,9 @@ async function buildDielineFiles(withZip,single){
     doc.setDrawColor(229,72,77);doc.setLineDashPattern([2,1.5],0);geo.folds.forEach(f=>doc.line(f[0]+M0,f[1]+M0,f[2]+M0,f[3]+M0));doc.setLineDashPattern([],0);
     doc.setFontSize(9);doc.setTextColor(110,105,98);doc.text(`${r1(geo.TW)} x ${r1(geo.TH)} mm  |  CUT: black solid  /  CREASE: red dashed`,M0,Math.max(5,M0*.45));};
   lines(true);if(!single){doc.addPage([Wm,Hm],Wm>Hm?'landscape':'portrait');lines(false);}
-  const pdf=doc.output('blob');
+  let pdf=doc.output('blob');
+  if(S.colorMode!=='rgb'&&window.CompressionStream){// print colour mode: rebuild the same pages as a CMYK PDF with spot-colour cut/crease lines
+    const pages=[{img:artC,cuts:geo.cuts,folds:geo.folds}];if(!single)pages.push({img:null,cuts:geo.cuts,folds:geo.folds});pdf=await cmykPdf(pages,Wm,Hm,M0);}
   if(!withZip)return {pdf};
   await ensureLibs();const zip=new JSZip(),b=baseName();
   zip.file(`${b}_칼선도면.pdf`,pdf);zip.file(`${b}_칼선도면.svg`,lastSVG);zip.file(`${b}_칼선.dxf`,makeDXF(geo));
@@ -2748,6 +2781,7 @@ async function buildDielineFiles(withZip,single){
 $('#dlPdf').onclick=async()=>{if(!current)return;try{work('PDF 만드는 중…');const r=await buildDielineFiles(false);work(null);saveBlob(`${baseName()}_칼선도면.pdf`,r.pdf);}catch(e){console.error(e);work(null);toast('PDF를 만들지 못했어요');}};
 $('#dlZip').onclick=async()=>{if(!current)return;try{work('도면 파일 만드는 중…');const r=await buildDielineFiles(true);work(null);saveBlob(`${baseName()}_칼선도면.zip`,r.zip);}catch(e){console.error(e);work(null);toast('도면 파일을 만들지 못했어요');}};
 $('#fxSel').addEventListener('change',e=>{S.fx=e.target.value;rebuild();});
+$('#cmSel').addEventListener('change',e=>{S.colorMode=e.target.value;rebuild();toast(S.colorMode==='rgb'?'RGB로 바꿨어요. PDF·AI가 화면용 색으로 나와요':'CMYK로 바꿨어요. PDF·AI가 인쇄용 CMYK로 나와요');});
 $('#coatSel').addEventListener('change',e=>{S.coat=e.target.value;rebuild();});
 $('#inSel').addEventListener('change',e=>{S.insideColor=e.target.value;rebuild();});
 $('#bgs').addEventListener('change',e=>{if(e.target.id==='sceneSel'){S.scene=e.target.value;applyScene();}});

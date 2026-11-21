@@ -1740,10 +1740,10 @@ function buildDieline(spec,P,F,geoOnly){
   let defs='',body='',cut='';const cuts=[];
   const sheetURL=P.sheet?(P.sheet.url||(P.sheet.url=P.sheet.c.toDataURL('image/jpeg',.88))):null;
   pieces.forEach((p,i)=>{const pts=p.pts.map(q=>f2(q[0])+','+f2(q[1])).join(' ');body+=`<polygon points="${pts}" fill="${p.fill}"/>`;
-    if(sheetURL&&!p.img&&p.fill!==spec.mat.inner){defs+=`<clipPath id="cs${i}"><polygon points="${pts}"/></clipPath>`;body+=`<g clip-path="url(#cs${i})"><image href="${sheetURL}" x="${f2(P.sheet.map.x0)}" y="${f2(P.sheet.map.y0)}" width="${f2(P.sheet.map.w)}" height="${f2(P.sheet.map.h)}" preserveAspectRatio="none"/></g>`;}
+    if(sheetURL&&!p.img&&p.fill!==spec.mat.inner){defs+=`<clipPath id="cs${i}"><polygon points="${pts}"/></clipPath>`;body+=`<g clip-path="url(#cs${i})"><image class="sheetimg" href="${sheetURL}" x="${f2(P.sheet.map.x0)}" y="${f2(P.sheet.map.y0)}" width="${f2(P.sheet.map.w)}" height="${f2(P.sheet.map.h)}" preserveAspectRatio="none"/></g>`;}
     if(p.img){const{key,x,y,w,h,rot}=p.img,cx=x+w/2,cy=y+h/2,sw=Math.abs(rot)===90,iw=sw?h:w,ih=sw?w:h;
       defs+=`<clipPath id="cp${i}"><polygon points="${pts}"/></clipPath>`;
-      body+=`<g clip-path="url(#cp${i})"><image href="${url(key)}" x="${f2(cx-iw/2)}" y="${f2(cy-ih/2)}" width="${f2(iw)}" height="${f2(ih)}" preserveAspectRatio="none"${rot?` transform="rotate(${rot} ${f2(cx)} ${f2(cy)})"`:''}/></g>`;}
+      body+=`<g clip-path="url(#cp${i})"><image class="${P.sheet&&P.faceImg&&P.faceImg[key]&&P.faceImg[key].__exact?'faceimg':'face'}" href="${url(key)}" x="${f2(cx-iw/2)}" y="${f2(cy-ih/2)}" width="${f2(iw)}" height="${f2(ih)}" preserveAspectRatio="none"${rot?` transform="rotate(${rot} ${f2(cx)} ${f2(cy)})"`:''}/></g>`;}
     for(let j=0;j<p.pts.length;j++){const a=p.pts[j],b=p.pts[(j+1)%p.pts.length];if(!folds.some(f=>onSeg(a,f)&&onSeg(b,f))){cut+=`M${f2(a[0])} ${f2(a[1])}L${f2(b[0])} ${f2(b[1])}`;cuts.push([a[0],a[1],b[0],b[1]]);}}});
   for(const h of holes)for(let j=0;j<h.length;j++){const a=h[j],b=h[(j+1)%h.length];cut+=`M${f2(a[0])} ${f2(a[1])}L${f2(b[0])} ${f2(b[1])}`;cuts.push([a[0],a[1],b[0],b[1]]);}
   const fd=folds.map(f=>`M${f2(f[0])} ${f2(f[1])}L${f2(f[2])} ${f2(f[3])}`).join('');
@@ -2617,9 +2617,13 @@ function syncSheetCtl(){$('#sheetCtl').hidden=!S.sheetImg;const v=Math.round((S.
 const sheetRebuild=debounce(()=>rebuild(),140);
 $('#sheetScale').addEventListener('input',e=>{S.sheetT.s=+e.target.value/100;$('#sheetScaleV').textContent=e.target.value+'%';sheetGhost(true);sheetRebuild();});
 $('#sheetReset').onclick=()=>{S.sheetT={s:1,x:0,y:0};syncSheetCtl();rebuild();};
-function sheetGhost(show){const svg=$('#dl svg');if(!svg||!S.sheetImg||!current||!current.spec.geo)return null;let g=svg.querySelector('#sheetGhost');
-  if(!g){g=document.createElementNS('http://www.w3.org/2000/svg','image');g.id='sheetGhost';g.setAttribute('href',S.sheetImg.toDataURL('image/jpeg',.6));g.setAttribute('preserveAspectRatio','none');g.style.pointerEvents='none';g.setAttribute('opacity','.55');svg.appendChild(g);}
-  const m=sheetMap(current.spec.geo,S.sheetImg);g.setAttribute('x',m.x0);g.setAttribute('y',m.y0);g.setAttribute('width',m.w);g.setAttribute('height',m.h);g.style.display=show?'':'none';return g;}
+// live preview: move the design that is already printed on the dieline. Face panels normally show their own cropped
+// copy, so while moving they switch to the shared sheet image clipped to the same outline (it looks the same, and it moves).
+function sheetGhost(){const svg=$('#dl svg');if(!svg||!S.sheetImg||!current||!current.spec.geo||!current.P.sheet)return;
+  const m=sheetMap(current.spec.geo,S.sheetImg),href=current.P.sheet.url||(current.P.sheet.url=current.P.sheet.c.toDataURL('image/jpeg',.88));
+  const set=im=>{im.setAttribute('x',m.x0);im.setAttribute('y',m.y0);im.setAttribute('width',m.w);im.setAttribute('height',m.h);};
+  svg.querySelectorAll('image.sheetimg').forEach(set);
+  svg.querySelectorAll('image.faceimg').forEach(im=>{if(im.getAttribute('href')!==href){im.setAttribute('href',href);im.removeAttribute('transform');}set(im);});}
 const SD={on:false,moved:false};
 $('#dl').addEventListener('pointerdown',e=>{const svg=$('#dl svg');if(!S.sheetImg||!svg||e.button!==0)return;const M=svg.getScreenCTM();if(!M)return;
   SD.on=true;SD.moved=false;SD.inv=M.inverse();SD.p0=new DOMPoint(e.clientX,e.clientY).matrixTransform(SD.inv);SD.t0={x:S.sheetT.x,y:S.sheetT.y};SD.id=e.pointerId;});

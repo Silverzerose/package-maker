@@ -1403,9 +1403,19 @@ function buildProduct(spec,P,st,T,keep,kq){
         if(hb>18)sleeve(r*1.006,hb*.5,hb*.48,dia,false);
       }
       break;}
+    case 'photo':{// container rebuilt from the silhouette AI read off the photo: width samples spun into a lathe
+      const pf=st.contProfile,num=a=>(Array.isArray(a)?a:[]).map(Number).filter(v=>isFinite(v)&&v>=0).map(v=>clamp(v,.02,1.6));
+      const body=num(pf.body),cap=num(pf.cap),br=clamp(+pf.body_ratio||.72,.4,.95),hb=H*br,mx=Math.max(...body,.05);
+      const bpts=[[0,0]].concat(body.map((w,i)=>[w/mx*r,(i/(Math.max(body.length-1,1)))*hb]));bpts[1][1]=Math.max(bpts[1][1],0);bpts.push([0,hb]);
+      const hex=/^#[0-9a-f]{6}$/i,bc=hex.test(pf.body_color||'')?pf.body_color:col.body,cc=hex.test(pf.cap_color||'')?pf.cap_color:col.cap;
+      const fin=pf.transparent?'clear':C.fin==='clear'?'gloss':C.fin;mesh(lathe(bpts),M(contMaterial(C.mat,fin,bc,T.env)));
+      if(cap.length){const cpts=[[0,hb]].concat(cap.map((w,i)=>[w/mx*r,hb+(i/(Math.max(cap.length-1,1)))*(H-hb)]));cpts.push([0,H]);mesh(lathe(cpts),M(contMaterial('pp','gloss',cc,T.env)));}
+      const mid=body.slice(Math.floor(body.length*.3),Math.ceil(body.length*.7)),even=mid.length&&Math.max(...mid)-Math.min(...mid)<.08*mx;
+      if(even){const rr2=Math.min(...mid)/mx*r;sleeve(rr2*1.006,hb*.42,hb*.42,dia,dia<30&&hb>dia*2.6);}
+      break;}
     default:{ // bottle family: pump, dropper, spray, bottle
-      const cl=C.cl;const topFrac={pump:.27,dropper:.33,spray:.3,screw:.17,flip:.17}[cl]||.18;
-      const hb=H*(1-topFrac),sh=Math.min(r*.55,hb*.2),rn=r*(cl==='dropper'?.36:(cl==='screw'||cl==='flip')?.42:.34),nh=Math.min(5,H*.04);
+      const cl=C.cl;const topFrac={pump:.27,dropper:.33,spray:.3,screw:.17,flip:.17,nozzle:.34}[cl]||.18;
+      const hb=H*(1-topFrac),sh=Math.min(r*.55,hb*.2),rn=r*(cl==='dropper'?.36:(cl==='screw'||cl==='flip'||cl==='nozzle')?.42:.34),nh=Math.min(5,H*.04);
       mesh(lathe([[0,0],[r-1.6,0],[r-.45,.45],[r,1.6],[r,hb-sh],[r*.9,hb-sh*.4],[r*.68,hb-sh*.08],[rn,hb],[rn,hb+nh]]),bodyMat);
       if(clear)mesh(lathe([[0,1.2],[r*.9,1.2],[r*.93,2.4],[r*.93,(hb-sh)*.86],[0,(hb-sh)*.86]]),M(new THREE.MeshPhysicalMaterial({color:new THREE.Color(col.liquid),transparent:true,opacity:.82,roughness:.2,depthWrite:false})));
       const vertical=dia<30&&hb>dia*2.6;sleeve(r*1.006,(hb-sh)*.62,(hb-sh)*.48,dia,vertical);
@@ -1413,6 +1423,10 @@ function buildProduct(spec,P,st,T,keep,kq){
       if(cl==='pump'){const c1=th*.28,c2=th*.32,c3=th-c1-c2;mesh(cyl(rn*1.45,rn*1.45,c1),capMat,0,yT+c1/2,0);mesh(cyl(1.8,1.8,c2,24),capMat,0,yT+c1+c2/2,0);mesh(cyl(rn*1.25,rn*1.3,c3),capMat,0,yT+c1+c2+c3/2,0);mesh(new THREE.BoxGeometry(3.6,3.2,r*.9),capMat,0,H-c3*.45,rn*1.2+r*.4);}
       else if(cl==='dropper'){const ch=th*.38,rb=Math.min(rn*1.05,th*.25),bh=Math.max(1,th-ch-rb);mesh(cyl(rn*1.5,rn*1.5,ch),capMat,0,yT+ch/2,0);const bulb=M(new THREE.MeshStandardMaterial({color:new THREE.Color(P.style==='luxury'?'#1A1A1A':mix(col.cap,'#000000',.15)),roughness:.55}));mesh(cyl(rn*1.05,rn*1.12,bh),bulb,0,yT+ch+bh/2,0);const sp=mesh(new THREE.SphereGeometry(rn*1.05,32,16,0,Math.PI*2,0,Math.PI/2),bulb,0,yT+ch+bh,0);sp.scale.y=rb/(rn*1.05);}
       else if(cl==='spray'){const ah=th*.35;mesh(cyl(rn*1.2,rn*1.25,ah),capMat,0,yT+ah/2,0);mesh(new THREE.BoxGeometry(2.4,2.4,2.4),darkMat,0,yT+ah*.7,rn*1.2);mesh(cyl(r*.86,r*.86,th-.4),M(contMaterial('pet','clear','#FFFFFF',T.env)),0,yT+(th-.4)/2,0);}
+      else if(cl==='nozzle'){// twist-off nozzle cap: ribbed collar, then a long cone to a pointed tip
+        const ch=th*.36,rc=rn*1.45,cm=M(contMaterial('pp','gloss',col.capMetal?P.pal.acc:col.cap,T.env));mesh(cyl(rc,rc,ch,64),cm,0,yT+ch/2,0);
+        const bm=M(cm.clone());const bt=tex(ribCanvas());bt.wrapS=THREE.RepeatWrapping;bt.repeat.set(Math.round(rc*2.6),1);bm.bumpMap=bt;bm.bumpScale=.18;mesh(cyl(rc*1.004,rc*1.004,ch*.9,120,true),bm,0,yT+ch/2,0);
+        const sh2=th*.12;mesh(cyl(rc*.62,rc,sh2,48),cm,0,yT+ch+sh2/2,0);const tl=th-ch-sh2;mesh(cyl(Math.max(.35,rc*.07),rc*.62,tl,40),cm,0,yT+ch+sh2+tl/2,0);}
       else if(cl==='flip'){mesh(cyl(rn*1.6,rn*1.65,th),capMat,0,yT+th/2,0);mesh(cyl(rn*1.605,rn*1.605,.6),darkMat,0,yT+th*.62,0);}
       else{const cm=M(contMaterial(col.capMetal?'alu':'pp',col.capMetal?'gloss':'matte',col.capMetal?P.pal.acc:col.cap,T.env));const rc=rn*1.4,pts=[[0,th],[rc-1,th],[rc-.2,th-.4],[rc,th-1.2],[rc,0]];mesh(lathe(pts.map(q=>[q[0],q[1]+yT])),cm);const bm=M(cm.clone());const bt=tex(ribCanvas());bt.wrapS=THREE.RepeatWrapping;bt.repeat.set(Math.round(rc*2.6),1);bm.bumpMap=bt;bm.bumpScale=col.capMetal?.08:.18;mesh(cyl(rc*1.003,rc*1.003,th-1.6,160,true),bm,0,yT+th/2-.6,0);}
     }
@@ -1849,14 +1863,15 @@ const CONT={
   dropper:{label:'스포이드 병',mat:'glass',fin:'clear',cl:'dropper',mats:['glass','petg','pet'],cls:['dropper','pump','screw']},
   jar:{label:'크림 자',mat:'pp',fin:'matte',cl:'screw',mats:['pp','petg','glass','alu'],cls:['screw','snap']},
   spray:{label:'스프레이·미스트',mat:'pet',fin:'clear',cl:'spray',mats:['pet','petg','glass','alu'],cls:['spray','pump','screw']},
-  bottle:{label:'병 (캡)',mat:'pet',fin:'gloss',cl:'screw',mats:['pet','petg','glass','pp','alu'],cls:['screw','flip','pump','dropper','spray']},
+  bottle:{label:'병 (캡)',mat:'pet',fin:'gloss',cl:'screw',mats:['pet','petg','glass','pp','alu'],cls:['screw','nozzle','flip','pump','dropper','spray']},
   tin:{label:'틴 케이스',mat:'alu',fin:'matte',cl:'screw',mats:['alu'],cls:['screw','snap']},
-  compact:{label:'컴팩트·쿠션',mat:'abs',fin:'gloss',cl:'snap',mats:['abs','pp','alu'],cls:['snap']}
+  compact:{label:'컴팩트·쿠션',mat:'abs',fin:'gloss',cl:'snap',mats:['abs','pp','alu'],cls:['snap']},
+  photo:{label:'사진 속 용기',mat:'pet',fin:'clear',cl:'none',mats:['pet','petg','glass','pp','pe','alu'],cls:['none']}
 };
 const MATL={pp:'PP',pe:'PE',pet:'PET',petg:'PETG',abs:'ABS',glass:'유리',alu:'알루미늄',paper:'종이'};
 const MATL_DESC={pp:'가볍고 튼튼한 가장 흔한 플라스틱이에요. 크림 자·립밤·캡에 많이 써요.',pe:'말랑해서 짜기 좋아요. 튜브에 주로 써요.',pet:'투명하고 가벼워요. 토너·미스트 병에 많이 써요.',petg:'PET보다 두껍고 유리처럼 맑은 광택이 나요.',abs:'단단하고 광택이 좋아 컴팩트·고급 캡에 써요.',glass:'고급스럽고 내용물이 잘 변하지 않지만 무겁고 깨질 수 있어요.',alu:'금속 느낌이 나고 빛과 공기를 잘 막아 줘요.',paper:'플라스틱을 줄인 친환경 선택이에요. 물기에 약해요.'};
 const FIN={matte:'무광',gloss:'유광',frost:'반투명 (프로스트)',clear:'투명'};
-const CLO={twist:'돌려 올리는 트위스트업',screw:'돌려서 여는 스크류캡',flip:'원터치 플립캡',snap:'눌러 닫는 스냅 뚜껑',pump:'펌프',dropper:'스포이드',spray:'스프레이 노즐',none:'없음 (상자 그대로)'};
+const CLO={twist:'돌려 올리는 트위스트업',screw:'돌려서 여는 스크류캡',flip:'원터치 플립캡',snap:'눌러 닫는 스냅 뚜껑',pump:'펌프',dropper:'스포이드',spray:'스프레이 노즐',nozzle:'뾰족 노즐캡',none:'없음 (상자 그대로)'};
 function finsFor(mat){return mat==='alu'?['matte','gloss']:mat==='paper'?['matte']:['pet','petg','glass'].includes(mat)?['clear','frost','gloss','matte']:['matte','gloss','frost'];}
 function autoContainer(st){
   const dia=Math.min(st.w,st.d),ratio=st.h/dia,flat=Math.max(st.w,st.d)>Math.min(st.w,st.d)*1.35;
@@ -1868,7 +1883,7 @@ function autoContainer(st){
   }
 }
 function resolveCont(st){
-  const type=!st.container||st.container==='auto'?autoContainer(st):st.container,d=CONT[type]||CONT.box;
+  let type=!st.container||st.container==='auto'?autoContainer(st):st.container;if(type==='photo'&&!(st.contProfile&&st.contProfile.body))type='bottle';const d=CONT[type]||CONT.box;
   const mat=st.material&&d.mats.includes(st.material)?st.material:d.mat;
   const fins=finsFor(mat),fin=st.finish&&fins.includes(st.finish)?st.finish:(fins.includes(d.fin)?d.fin:fins[0]);
   const cl=st.closure&&d.cls.includes(st.closure)?st.closure:d.cl;
@@ -1956,9 +1971,39 @@ G.mine=[];try{G.mine=JSON.parse(localStorage.getItem('pm_mine_v1')||'[]')||[];}c
 function persistMine(){try{localStorage.setItem('pm_mine_v1',JSON.stringify(G.mine.slice(0,24).map(m=>({id:m.id,mine:true,title:m.title,thumb:m.thumb}))));}catch(e){}}
 function persistSaved(){try{localStorage.setItem('pm_saved_v1',JSON.stringify(G.saved.slice(-40)));}catch(e){}}
 let sampleP=null;
-function getSample(){if(!sampleP){try{sampleP=(window.claude&&typeof window.claude.use==='function')?Promise.resolve(window.claude.use('sample')).catch(()=>null):Promise.resolve(null);}catch(e){sampleP=Promise.resolve(null);}}return sampleP;}
+function getSample(){if(!sampleP){try{sampleP=(window.claude&&typeof window.claude.use==='function')?Promise.resolve(window.claude.use('sample')).catch(()=>null):Promise.resolve(null);}catch(e){sampleP=Promise.resolve(null);}
+  sampleP=sampleP.then(s=>s||edgeSample());}return sampleP;}
+// Outside claude.ai (e.g. GitHub Pages) the same calls go to the Supabase "analyze" function, which holds the OpenAI key
+// and enforces a daily cap. Same shape as the claude.ai sample namespace: limits() and json(prompt,{images}).
+function edgeSample(){if(typeof SUPA==='undefined'||!SUPA.url||!SUPA.key)return null;
+  const toData=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(b);});
+  return{limits:async()=>({images:true}),
+    json:async(prompt,opt)=>{let image=null;const b=opt&&opt.images&&opt.images[0];
+      if(b){const u=URL.createObjectURL(b);try{const s=await shrink(u,1024,.85);image=await toData(s||b);}finally{URL.revokeObjectURL(u);}}
+      let r;try{r=await fetch(`${SUPA.url}/functions/v1/analyze`,{method:'POST',headers:{apikey:SUPA.key,Authorization:'Bearer '+SUPA.key,'Content-Type':'application/json'},body:JSON.stringify({prompt:String(prompt).slice(0,9000),image})});}
+      catch(e){throw{code:'network',message:'연결 실패'};}
+      const j=await r.json().catch(()=>({}));if(!r.ok||!j.result)throw{code:j.code==='rate_limited'?'rate_limited':j.code==='image_rejected'?'image_rejected':j.code==='no_key'?'not_granted':'error',message:j.code||String(r.status)};
+      return j.result;}};}
 function loadImg(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});}
-function extractColors(cv){
+// Read an object's outline straight from the photo pixels: background = border colour, foreground = colour difference
+// or a strong edge. Picks the object nearest the centre (e.g. the middle bottle of three) and returns its width at
+// 48 heights, bottom to top, plus its height/width ratio.
+function silhouette(src){try{
+  const sc=Math.min(1,300/Math.max(src.width,src.height)),W=Math.max(8,Math.round(src.width*sc)),H=Math.max(8,Math.round(src.height*sc));
+  const c=makeCanvas(W,H),x=c.getContext('2d');x.drawImage(src,0,0,W,H);const d=x.getImageData(0,0,W,H).data,px=(i,j)=>(j*W+i)*4;
+  const br=[],bg=[],bb=[];for(let i=0;i<W;i++)for(const j of[0,H-1]){const p=px(i,j);br.push(d[p]);bg.push(d[p+1]);bb.push(d[p+2]);}for(let j=0;j<H;j++)for(const i of[0,W-1]){const p=px(i,j);br.push(d[p]);bg.push(d[p+1]);bb.push(d[p+2]);}
+  const med=a=>a.sort((p,q)=>p-q)[a.length>>1],R=med(br),G2=med(bg),B=med(bb);
+  const lum2=(i,j)=>{const p=px(i,j);return d[p]*.3+d[p+1]*.59+d[p+2]*.11;};
+  const m=new Uint8Array(W*H);for(let j=1;j<H-1;j++)for(let i=1;i<W-1;i++){const p=px(i,j),dc=Math.abs(d[p]-R)+Math.abs(d[p+1]-G2)+Math.abs(d[p+2]-B),gr=Math.abs(lum2(i+1,j)-lum2(i-1,j))+Math.abs(lum2(i,j+1)-lum2(i,j-1));if(dc>36||gr>34)m[j*W+i]=1;}
+  const col=new Array(W).fill(0);for(let i=0;i<W;i++)for(let j=0;j<H;j++)col[i]+=m[j*W+i];
+  const groups=[];let s=-1,gap=0;for(let i=0;i<=W;i++){const on=i<W&&col[i]>H*.03;if(on){if(s<0)s=i;gap=0;}else if(s>=0){if(++gap>2||i===W){groups.push([s,i-gap]);s=-1;gap=0;}}}
+  const big=groups.filter(g=>g[1]-g[0]>W*.06);if(!big.length)return null;
+  const g=big.sort((a,b)=>Math.abs((a[0]+a[1])/2-W/2)-Math.abs((b[0]+b[1])/2-W/2))[0];
+  const wr=[];for(let j=0;j<H;j++){let l=-1,r=-1;for(let i=g[0];i<=g[1];i++)if(m[j*W+i]){if(l<0)l=i;r=i;}wr.push(l<0?0:r-l+1);}
+  let top=wr.findIndex(v=>v>1),bot=H-1-[...wr].reverse().findIndex(v=>v>1);if(top<0||bot-top<H*.15)return null;
+  const ws=wr.slice(top,bot+1).map((v,k,a)=>{const n=[a[k-1],v,a[k+1]].filter(z=>z!=null).sort((p,q)=>p-q);return n[n.length>>1];});
+  const mx=Math.max(...ws),N=48,out=[];for(let k=0;k<N;k++){const j=Math.round((1-k/(N-1))*(ws.length-1));out.push(ws[j]/mx);}
+  return{widths:out,aspect:(bot-top+1)/mx};}catch(e){return null;}}function extractColors(cv){
   const c=makeCanvas(48,48),x=c.getContext('2d');x.drawImage(cv,0,0,48,48);const d=x.getImageData(0,0,48,48).data,bins=new Map();
   for(let i=0;i<d.length;i+=4){if(d[i+3]<200)continue;const r=d[i],g=d[i+1],b=d[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b);if(mx>238&&mx-mn<18)continue;if(mx<16)continue;const k=(r>>4)<<8|(g>>4)<<4|(b>>4);const e=bins.get(k)||{n:0,r:0,g:0,b:0};e.n++;e.r+=r;e.g+=g;e.b+=b;bins.set(k,e);}
   const arr=[...bins.values()].sort((a,b)=>b.n-a.n),out=[];
@@ -1977,7 +2022,7 @@ async function setPhoto(file){
   if(!file||!/^image\//.test(file.type)){toast('이미지 파일을 올려 주세요');return;}
   const url=URL.createObjectURL(file);
   try{const img=await loadImg(url);const sc=Math.min(1,1600/Math.max(img.width,img.height));const c=makeCanvas(img.width*sc,img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-    G.photoBlob=await new Promise(r=>c.toBlob(r,'image/jpeg',.9));G.photoURL=c.toDataURL('image/jpeg',.82);G.photoColors=extractColors(c);G.ai=null;}
+    G.photoBlob=await new Promise(r=>c.toBlob(r,'image/jpeg',.9));G.photoURL=c.toDataURL('image/jpeg',.82);G.photoColors=extractColors(c);G.photoSil=silhouette(c);G.ai=null;}
   catch(e){toast('사진을 읽지 못했어요');return;}finally{URL.revokeObjectURL(url);}
   $('#photoPrev').src=G.photoURL;$('#photoPrev').hidden=false;$('#dropEmpty').hidden=true;$('#photoAct').hidden=false;$('#photoFront').hidden=false;
   S.customPal=photoPal(G.photoColors);S.customColor=null;
@@ -1997,12 +2042,15 @@ const AI_PROMPT=`너는 화장품·식품·생활용품 패키지 디자이너�
  "colors": ["#RRGGBB", "..."],
  "mood": ["분위기 키워드", "..."],
  "containers": [
-  {"type": "box|lipbalm|tube|pump|dropper|jar|spray|bottle|tin|compact", "material": "pp|pe|pet|petg|abs|glass|alu|paper", "finish": "matte|gloss|frost|clear", "closure": "twist|screw|flip|snap|pump|dropper|spray|none", "why": "한 문장 이유"}
+  {"type": "box|lipbalm|tube|pump|dropper|jar|spray|bottle|tin|compact", "material": "pp|pe|pet|petg|abs|glass|alu|paper", "finish": "matte|gloss|frost|clear", "closure": "twist|screw|nozzle|flip|snap|pump|dropper|spray|none (nozzle=끝이 뾰족한 노즐캡)", "why": "한 문장 이유"}
  ],
  "styles": ["minimal|vivid|kraft|luxury|natural|tech 중 어울리는 순서로 2~4개"],
  "palette": {"bg": "#RRGGBB", "ink": "#RRGGBB", "accent": "#RRGGBB"},
  "pattern": "none|lines|blocks|dots|waves|stripes|grid|leaves|blobs|arcs|deco",
- "box_type": "tuck|hanger|mailer|drawer|lidbase|rsc|tent|handle 중 이 제품에 맞는 상자. 사진 속 상자가 보이면 가장 비슷한 모양. tent는 바닥 위로 앞·뒤 두 면이 꼭대기에서 맞닿는 삼각 선물 상자(옆면이 V자로 접혀 들어가고 꼭대기를 리본으로 묶음), handle은 윗면에 손잡이가 달린 캐리 박스",
+ "box_shape": "사진 속 상자의 겉모양을 한 문장으로 먼저 묘사 (옆에서 본 윤곽이 삼각형인지 직사각형인지, 리본·손잡이·뚜껑이 있는지)",
+ "box_type": "위 묘사에 맞는 상자 하나. tuck=세로로 긴 직육면체 종이상자(위아래 꽂는 뚜껑), hanger=위에 걸이 구멍 탭, mailer=납작한 택배형(뚜껑이 앞으로 넘어옴), drawer=서랍처럼 빼는 상자, lidbase=뚜껑과 바닥이 나뉜 단단한 상자, rsc=큰 골판지 택배상자, tent=옆에서 보면 삼각형(앞·뒤 면이 꼭대기에서 맞닿음)이고 꼭대기를 리본으로 묶는 선물상자, handle=윗면에 종이판 손잡이(판지에 손가락 구멍이 뚫린 판)가 달린 캐리 박스. 중요: 리본·끈을 묶어 닫는 상자는 handle이 아니야. 앞·뒤 면이 위로 갈수록 좁아져 꼭대기에서 만나고 리본으로 묶으면 tent야. 사진 속 상자가 보이면 반드시 그 모양을 따라",
+ "container_profile": "사진에 용기(병·튜브·자 등)가 보이면 그 실루엣을 숫자로 읽어 줘. 없으면 null. 형식: {\"body\": [바닥부터 어깨·목까지 높이를 같은 간격 12곳으로 나눠 잰 몸통 너비. 가장 넓은 곳=1], \"body_ratio\": 전체 높이 중 몸통(캡 아래까지) 비율 0.4~0.95, \"cap\": [캡 아래부터 맨 끝까지 8곳의 너비, 몸통 가장 넓은 곳=1 기준], \"body_color\": \"#RRGGBB\", \"cap_color\": \"#RRGGBB\", \"transparent\": true/false}",
+ "fx": "none|gold|silver|rose|emboss|spotuv 중 글자·로고에 보이는 후가공 (금색 글자·테두리면 gold)",
  "layout": "classic|minimal|giant|band|editorial 중 사진 속 앞면 배치와 가장 비슷한 것. minimal은 여백 많고 브랜드만 작게 있는 앞면",
  "leaflet": 0,
  "leaflet_text": "설명서에 들어갈 사용 방법·주의사항을 줄바꿈으로 구분해 3~6줄",
@@ -2038,12 +2086,22 @@ function applyAI(r,toDieline){
   if(r.tagline)S.tag=String(r.tagline).slice(0,60);
   if(ai.colors.length)G.photoColors=[...new Set(ai.colors.concat(G.photoColors))].slice(0,6);
   if(ai.containers[0]){const c=ai.containers[0];S.container=c.type;S.material=c.mat;S.finish=c.fin;S.closure=c.cl;}
+  // a container visible in the photo: keep its silhouette and rebuild that exact shape in 3D
+  const cp=r.container_profile;S.contProfile=null;
+  const sil=G.photoSil;
+  if(cp&&typeof cp==='object'&&sil&&sil.widths.length>=8){// outline from the pixels, split into body and cap where the AI says the cap starts
+    // the cap starts where the outline first steps in sharply (collar/neck); fall back to the AI's estimate
+    const n=sil.widths.length,step=sil.widths.findIndex((v,i)=>i>n*.3&&v<.75&&sil.widths.slice(i,i+3).every(w=>w<.8));
+    const br=step>0?step/(n-1):clamp(+cp.body_ratio||.72,.4,.95),k=Math.round(br*(n-1));S.contProfile={body:sil.widths.slice(0,k+1),cap:sil.widths.slice(k),body_ratio:br,body_color:cp.body_color,cap_color:cp.cap_color,transparent:!!cp.transparent};
+    if(S.w>0)S.h=clamp(Math.round(Math.min(S.w,S.d||S.w)*sil.aspect),10,1500);
+    S.container='photo';S.material=ai.containers[0]&&CONT.photo.mats.includes(ai.containers[0].mat)?ai.containers[0].mat:(cp.transparent?'pet':'pp');S.finish=cp.transparent?'clear':'gloss';S.closure='none';}
   if(ai.styles[0]){S.style=ai.styles[0];S.palIdx=null;S.customColor=null;S.pattern='auto';}
   const pl=r.palette||{};if(hex.test(pl.bg||'')&&hex.test(pl.ink||'')){S.customPal={bg:pl.bg,ink:pl.ink,acc:hex.test(pl.accent||'')?pl.accent:mix(pl.bg,pl.ink,.4)};}else if(G.photoColors.length)S.customPal=photoPal(G.photoColors);
   if(PAT[r.pattern])S.pattern=r.pattern;
   const lf=+r.leaflet;if(lf>=2&&lf<=4){S.leaflet=lf;if(!['tuck','hanger'].includes(S.boxType))S.boxType='tuck';}
   if(r.leaflet_text)S.leafText=String(r.leaflet_text).slice(0,400);
   if(LAYOUTS[r.layout])S.layout=r.layout;
+  if(FXL[r.fx])S.fx=r.fx;
   if(['tuck','hanger','mailer','drawer','lidbase','rsc','tent','handle'].includes(r.box_type)&&!(S.leaflet&&!['tuck','hanger'].includes(r.box_type)))S.boxType=r.box_type;
   aiStatus(`<b>${esc(ai.product||'제품')}</b>(으)로 봤어요. 크기·용기·스타일을 맞춰 ${toDieline?'<b>도면</b>을 만들었어요. 비슷한 시안은 레퍼런스 탭에 있어요.':'두고 레퍼런스를 만들었어요.'}`);
   rebuild();refreshGallery(true);showTab(toDieline?'pdl':'pref');
@@ -2076,7 +2134,7 @@ async function renderThumb(c){
   return url;
 }
 function contChoices(){
-  if(G.ai&&G.ai.containers.length)return G.ai.containers.map(c=>[c.type,c.mat,c.fin,c.cl]);
+  if(G.ai&&G.ai.containers.length)return (S.contProfile?[['photo',S.material||'pet',S.finish||'clear','none']]:[]).concat(G.ai.containers.map(c=>[c.type,c.mat,c.fin,c.cl]));
   const cur=resolveCont(S);const base=ALT[cur.type]||ALT.box;
   return [[cur.type,cur.mat,cur.fin,cur.cl]].concat(base.filter(a=>a.join()!==[cur.type,cur.mat,cur.fin,cur.cl].join()));
 }
@@ -2172,7 +2230,7 @@ function applyConcept(c){
 function showTab(id){$$('.tab').forEach(x=>x.classList.toggle('on',x.dataset.p===id));$$('.pane').forEach(p=>p.classList.toggle('on',p.id===id));if(id==='pref'&&!G.started)refreshGallery(true);if(id==='pcom'&&!COM.loaded)loadCom(true);}
 function renderContUI(P){
   const C=resolveCont(S);
-  $('#conts').innerHTML=[['auto','자동']].concat(Object.keys(CONT).map(k=>[k,CONT[k].label])).map(([k,l])=>`<button class="ct${(S.container||'auto')===k?' on':''}" data-v="${k}">${svgIcon(k)}<span>${l}</span>${k==='auto'?`<em>${CONT[C.type].label}</em>`:''}</button>`).join('');
+  $('#conts').innerHTML=[['auto','자동']].concat(Object.keys(CONT).filter(k=>k!=='photo'||S.contProfile).map(k=>[k,CONT[k].label])).map(([k,l])=>`<button class="ct${(S.container||'auto')===k?' on':''}" data-v="${k}">${svgIcon(k)}<span>${l}</span>${k==='auto'?`<em>${CONT[C.type].label}</em>`:''}</button>`).join('');
   const d=CONT[C.type];
   $('#mat').innerHTML=d.mats.map(m=>`<option value="${m}">${MATL[m]}</option>`).join('');$('#mat').value=C.mat;
   $('#fin').innerHTML=finsFor(C.mat).map(f=>`<option value="${f}">${FIN[f]}</option>`).join('');$('#fin').value=C.fin;
@@ -2678,7 +2736,7 @@ $('#expAI').onclick=async()=>{
 // The anon key is a public key by design: the table and bucket rules (supabase-setup.sql) only allow reading and adding.
 const SUPA={url:'https://dvbdmrhyfebhcmjugzvm.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2YmRtcmh5ZmViaGNtanVnenZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUyMzA1MzgsImV4cCI6MjExMDgwNjUzOH0.jSAf5C4tRmyqmVOI08WhUEN-briB0OBQOD7BV-g2_E4'};
 const COM={loaded:false,items:[],offset:0,page:24,photo:null};
-const SAVE_KEYS=['w','d','h','cat','brand','name','tag','en','volume','boxType','style','palIdx','customPal','customColor','pattern','layout','seed','container','material','finish','closure','contColor','fx','coat','board','clearance','leaflet','insideColor','scene','bg','fontHead','fontBody'];
+const SAVE_KEYS=['contProfile','w','d','h','cat','brand','name','tag','en','volume','boxType','style','palIdx','customPal','customColor','pattern','layout','seed','container','material','finish','closure','contColor','fx','coat','board','clearance','leaflet','insideColor','scene','bg','fontHead','fontBody'];
 const supaOn=()=>!!(SUPA.url&&SUPA.key);
 const supaH=extra=>Object.assign({apikey:SUPA.key,Authorization:'Bearer '+SUPA.key},extra||{});
 const pubURL=p=>`${SUPA.url}/storage/v1/object/public/gallery/${p.split('/').map(encodeURIComponent).join('/')}`;
@@ -2707,6 +2765,9 @@ async function sendCom(){
   if(!supaOn()||!current)return;const title=$('#comTitle').value.trim();if(!title){toast('작품 이름을 적어 주세요');$('#comTitle').focus();return;}
   const btn=$('#comSend');btn.disabled=true;work('작품을 올리는 중…');
   try{const id=(crypto.randomUUID?crypto.randomUUID():uid()),day=new Date().toISOString().slice(0,10);
+    // a reference photo picked for this upload recolours the design first, so each upload's mockup comes from its own photo
+    if(COM.photo){try{const im=await loadImg(COM.photo),c=makeCanvas(160,160*im.height/im.width);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+      const cols=extractColors(c);if(cols.length){G.photoColors=cols;S.customPal=photoPal(cols);S.customColor=null;await rebuild();while(building)await pause();await pause();}}catch(e){}}
     const mk=await canvasBlob(hiSnapshot(1),1400,.86);const mockup_path=mk?await supaUpload(`${day}/${id}-mockup.jpg`,mk):null;
     let photo_path='-';const src=COM.photo||G.photoURL;if(src){const pb=await shrink(src,1400,.86);if(pb)photo_path=await supaUpload(`${day}/${id}-photo.jpg`,pb);}
     const {spec,P}=current,state={};for(const k of SAVE_KEYS)if(S[k]!==undefined&&S[k]!==null)state[k]=S[k];

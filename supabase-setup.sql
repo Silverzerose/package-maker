@@ -42,3 +42,15 @@ create policy "갤러리 사진 올리기" on storage.objects
 drop policy if exists "갤러리 사진 보기" on storage.objects;
 create policy "갤러리 사진 보기" on storage.objects
   for select to anon, authenticated using (bucket_id = 'gallery');
+
+-- 3) AI 사진 분석(analyze 기능)의 하루 사용 횟수. 기능 안에서만 쓰고, 누구도 직접 읽거나 고칠 수 없어요.
+create table if not exists public.ai_usage (day date primary key, calls int not null default 0);
+alter table public.ai_usage enable row level security;
+grant all on public.ai_usage to service_role;
+create or replace function public.bump_ai_usage() returns int language sql security definer set search_path = public as $fn$
+  insert into public.ai_usage (day, calls) values (current_date, 1)
+  on conflict (day) do update set calls = public.ai_usage.calls + 1 returning calls;
+$fn$;
+revoke execute on function public.bump_ai_usage() from public, anon, authenticated;
+grant execute on function public.bump_ai_usage() to service_role;
+-- analyze 기능 코드는 supabase-analyze.ts 파일에 있고, OPENAI_API_KEY는 [Edge Functions → Secrets]에 넣어요.

@@ -204,6 +204,14 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
 .modal .hd b{font-size:15px}
 .modal img{max-width:100%;display:block;border-radius:10px;border:1px solid var(--line)}
 .modal p{font-size:12.5px;color:var(--muted);margin-top:10px}
+.donate{width:min(420px,84vw);text-align:center;padding:6px 4px 2px}
+.dn-hi{font-size:46px;line-height:1}.dn-t{display:block;font-size:21px;font-weight:900;margin-top:8px;letter-spacing:-.02em}
+.dn-p{font-size:13.5px!important;color:var(--muted);line-height:1.65;margin-top:8px!important}
+.dn-acct{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px;background:var(--accent-soft);border-radius:14px;padding:14px 12px}
+.dn-acct span{font-size:13px;font-weight:700;color:#8A3A1C}.dn-acct b{font-size:19px;font-weight:900;letter-spacing:.02em;color:var(--ink);font-variant-numeric:tabular-nums}
+.dn-file{font-size:12px;color:var(--muted);margin-top:14px;word-break:break-all}
+.dn-go{width:100%;height:48px!important;font-size:15.5px!important;margin-top:12px}
+.dn-s{font-size:12px!important;color:var(--muted);margin-top:8px!important}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:60}
 .toast.on{opacity:1;transform:translateX(-50%)}
 .work{position:fixed;inset:0;background:rgba(20,18,15,.45);display:none;place-items:center;z-index:70}
@@ -2445,10 +2453,7 @@ async function exportPSD(){
     work('압축하는 중…');await pause();
     const blob=await zip.generateAsync({type:'blob',compression:'STORE'});
     work(null);
-    const dl=await getDL();
-    if(!dl){modal('PSD 내보내기','<div style="max-width:520px;line-height:1.7;font-size:14px">PSD 파일은 다 만들었지만, 지금 보고 있는 화면에서는 파일 저장이 막혀 있어요.<br>claude.ai에서 이 페이지를 열어 다시 눌러 주세요.</div>','');return;}
-    try{await dl.save({filename:`${base}_PSD_AI.zip`,data:blob});toast("PSD·AI 파일을 저장했어요");}
-    catch(e){const c=e&&e.code;toast(c==='declined'?'저장을 취소했어요':c==='rate_limited'?'잠시 후 다시 눌러 주세요':'저장하지 못했어요'+(c?` (${c})`:''));}
+    await saveBlob(`${base}_PSD_AI.zip`,blob);
   }catch(e){console.error(e);work(null);toast('PSD를 만들지 못했어요: '+(e.message||e));}
   finally{work(null);exporting=false;}
 }
@@ -2698,10 +2703,23 @@ function curBg(){const sc=SCENES[S.scene];return sc&&sc.bg?{a:sc.bg[0],b:sc.bg[1
 function sceneBgTex(){const g=curBg(),k=g.a+g.b;if(bgTexCache[k])return bgTexCache[k];const c=makeCanvas(4,256),x=c.getContext('2d'),gr=x.createLinearGradient(0,0,0,256);gr.addColorStop(0,g.a);gr.addColorStop(1,g.b);x.fillStyle=gr;x.fillRect(0,0,4,256);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return bgTexCache[k]=t;}
 function hiSnapshot(scale){const r=R3.renderer,pr=r.getPixelRatio(),el=r.domElement,w=el.clientWidth||800,h=el.clientHeight||600;r.setPixelRatio(pr*scale);r.setSize(w,h,false);const prev=R3.scene.background;R3.scene.background=sceneBgTex();R3.dimG&&(R3.dimG.visible=false);
   r.render(R3.scene,R3.camera);const c=makeCanvas(el.width,el.height);c.getContext('2d').drawImage(el,0,0);R3.scene.background=prev;R3.dimG&&(R3.dimG.visible=R3.showDims!==false);r.setPixelRatio(pr);r.setSize(w,h,false);return c;}
-async function saveBlob(name,data){const dl=await getDL();if(!dl){// outside claude.ai (e.g. GitHub Pages): a normal browser download
-    try{const b=data instanceof Blob?data:new Blob([data]);const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);toast('내려받기를 시작했어요');return true;}
-    catch(e){modal('파일 저장','<div style="max-width:520px;line-height:1.7;font-size:14px">이 브라우저에서는 파일을 저장하지 못했어요. 다른 브라우저(크롬·엣지)로 열어 다시 눌러 주세요.</div>','');return false;}}
-  try{await dl.save({filename:name,data});toast('저장했어요');return true;}catch(e){const c=e&&e.code;toast(c==='declined'?'저장을 취소했어요':c==='rate_limited'?'잠시 후 다시 눌러 주세요':'저장하지 못했어요'+(c?` (${c})`:''));return false;}}
+// Every export goes through one small "support us" popup; its 내보내기 button does the save inside the click,
+// so browsers that block downloads started without a click let it through.
+const DONATE={bank:'국민은행',acct:'287701-04-399757'};
+function browserSave(name,data){const b=data instanceof Blob?data:new Blob([data]);const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);}
+async function saveBlob(name,data){const dl=await getDL(),size=(data&&data.size)||(data&&data.length)||0;
+  return new Promise(res=>{let done=false;const finish=v=>{if(done)return;done=true;res(v);};
+    modal('파일 내보내기',`<div class="donate"><div class="dn-hi">🙂</div><b class="dn-t">후원 부탁드립니다</b>
+      <p class="dn-p">패키지 메이커는 무료예요. 더 좋은 기능으로 발전할 수 있게 마음을 보태 주시면 큰 힘이 돼요.</p>
+      <div class="dn-acct"><span>${DONATE.bank}</span><b>${DONATE.acct}</b><button class="btn sm" id="dnCopy">계좌번호 복사</button></div>
+      <div class="dn-file">${esc(name)}${size?` · ${(size/1048576).toFixed(size>1048576?1:2)}MB`:''}</div>
+      <button class="btn primary dn-go" id="dnGo">내보내기</button>
+      <p class="dn-s">후원하지 않아도 무료로 내보낼 수 있어요.</p></div>`,'');
+    $('#dnCopy').onclick=async()=>{try{await navigator.clipboard.writeText(DONATE.acct.replace(/-/g,''));toast('계좌번호를 복사했어요. 감사합니다!');}catch(e){toast(DONATE.bank+' '+DONATE.acct);}};
+    $('#dnGo').onclick=async()=>{$('#modal').classList.remove('on');
+      if(!dl){try{browserSave(name,data);toast('내려받기를 시작했어요');finish(true);}catch(e){toast('이 브라우저에서는 저장하지 못했어요. 크롬·엣지로 열어 주세요');finish(false);}return;}
+      try{await dl.save({filename:name,data});toast('저장했어요');finish(true);}catch(e){const c=e&&e.code;toast(c==='declined'?'저장을 취소했어요':c==='rate_limited'?'잠시 후 다시 눌러 주세요':'저장하지 못했어요'+(c?` (${c})`:''));finish(false);}};
+    $('#mX').addEventListener('click',()=>finish(false),{once:true});});}
 const baseName=()=>safeName(`${current.P.text.brand}_${current.P.text.name}`);
 async function recordVideo(){
   const el=R3.renderer&&R3.renderer.domElement;if(!el||!el.captureStream||!window.MediaRecorder){toast('이 브라우저는 영상 녹화를 지원하지 않아요');return;}

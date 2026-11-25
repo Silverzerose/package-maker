@@ -177,6 +177,30 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
 .wk-how i{width:14px;height:14px;border-radius:4px;border:1px solid rgba(0,0,0,.12);display:inline-block}
 .wk .btn{margin-top:auto}
 @media (max-width:920px){.comup-f{grid-template-columns:1fr}.comnote{grid-column:auto}}
+#pcost{background:var(--bg);border:0}
+.costwrap{position:absolute;inset:0;overflow:auto;padding:4px 2px 40px}
+.cost-grid{display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start}
+.cost-side{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.cost-side .grid2{margin-top:0}.cost-h{font-size:15px;font-weight:900}
+.qchips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.qchips input{width:96px;height:32px}
+.fit{border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:3px;font-size:12px;line-height:1.5}
+.fit b{font-size:13px}.fit.ok{background:#E8F5EE;color:#1F5C3D}.fit.bad{background:#FDECEA;color:#9B2C1F}
+.cost-main{display:flex;flex-direction:column;gap:14px;min-width:0}
+.cost-big{display:flex;gap:14px;flex-wrap:wrap;background:var(--ink);color:#fff;border-radius:16px;padding:18px 20px}
+.cost-big>div{flex:1;min-width:180px}.cost-big small{display:block;font-size:12px;color:#BDB6AA}
+.cost-big b{display:block;font-size:34px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#FF9A70}.cost-big b.sm{font-size:24px;color:#fff;margin-top:8px}
+.cost-items{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.ci{display:grid;grid-template-columns:minmax(150px,1.2fr) 1fr 110px;gap:12px;align-items:center;font-size:13px}
+.ci .n em{display:block;font-style:normal;font-size:11px;color:var(--muted)}.ci .bar{height:8px;background:var(--soft);border-radius:99px;overflow:hidden}
+.ci .bar i{display:block;height:100%;background:var(--accent);border-radius:99px}.ci b{text-align:right;font-variant-numeric:tabular-nums}
+.cost-tb{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;font-size:13px;font-variant-numeric:tabular-nums}
+.cost-tb th,.cost-tb td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right}.cost-tb th:first-child,.cost-tb td:first-child{text-align:left;color:var(--muted)}
+.cost-tb .on{background:var(--accent-soft);font-weight:700}
+.cost-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.cost-two .card{background:#fff}.cost-two .card p{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
+.alt{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;font-size:13px;padding:7px 0;border-bottom:1px solid var(--line)}
+.alt b{color:#1F7A4D}.alt em{font-style:normal;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.cost-note{font-size:12px;color:var(--muted);line-height:1.6}
+@media (max-width:920px){.cost-grid,.cost-two{grid-template-columns:1fr}}
 #pspec{background:#fff}
 .specwrap{position:absolute;inset:0;overflow:auto;padding:28px}
 .specgrid{display:grid;grid-template-columns:1.2fr 1fr;gap:28px;max-width:1000px}
@@ -414,7 +438,8 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
       <div class="sub">앞면 레이아웃</div>
       <select id="layoutSel"><option value="auto">자동 (가운데 정렬)</option><option value="classic">가운데 정렬</option><option value="minimal">미니멀 (브랜드만, 여백 크게)</option><option value="giant">큰 글자 (브랜드를 크게 잘라 넣기)</option><option value="band">컬러 띠</option><option value="editorial">에디토리얼 (왼쪽 정렬)</option></select>
       <div class="grid2">
-        <div class="field"><label>후가공 (브랜드·제품명)</label><select id="fxSel"><option value="none">없음</option><option value="gold">금박</option><option value="silver">은박</option><option value="rose">로즈골드박</option><option value="emboss">형압 (엠보싱)</option><option value="spotuv">부분 UV (유광)</option></select></div>
+        <div class="field"><label>후가공 (브랜드·제품명)</label><select id="fxSel"><option value="none">없음</option><option value="gold">금박</option><option value="silver">은박</option><option value="rose">로즈골드박</option><option value="spotuv">부분 UV (유광)</option></select></div>
+        <div class="field"><label>형압 (글씨 높이)</label><select id="pressSel"><option value="none">없음</option><option value="emboss">양각 — 튀어나오게</option><option value="deboss">음각 — 들어가게</option></select></div>
         <div class="field" style="grid-column:1/3"><label>인쇄 색 모드</label><select id="cmSel"><option value="cmyk">CMYK (인쇄용, 기본)</option><option value="rgb">RGB (화면·웹용)</option></select></div>
         <div class="field"><label>코팅</label><select id="coatSel"><option value="matte">무광 코팅</option><option value="gloss">유광 코팅</option><option value="soft">소프트터치 (벨벳)</option></select></div>
       </div>
@@ -476,6 +501,7 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
       <button class="tab on" data-p="p3d">3D 목업</button>
       <button class="tab" data-p="pdl">칼선 도면</button>
       <button class="tab" data-p="pspec">사양서</button>
+      <button class="tab" data-p="pcost">제작 단가</button>
       <button class="tab" data-p="pcom">모두의 작품</button>
       <span class="sp"></span>
     </div>
@@ -562,6 +588,8 @@ select.mini{width:auto;height:28px;font-size:12px;padding:0 6px;border-radius:7p
         <button class="btn dark psdBtn" id="dlPsd">PSD·AI 내보내기</button>
       </div>
     </div>
+
+    <div class="pane" id="pcost"><div class="costwrap"><div id="cost"></div></div></div>
 
     <div class="pane" id="pcom">
       <div class="comwrap">
@@ -677,6 +705,7 @@ function eanCheck(d){let s=0;for(let i=0;i<12;i++)s+=(+d[i])*(i%2?3:1);return(10
 function eanNormalize(v){const d=String(v||'').replace(/\D/g,'');if(d.length===12)return d+eanCheck(d);if(d.length===13&&eanCheck(d)===+d[12])return d;return null;}
 function eanBits(c){let b='101';const p=EAN_P[+c[0]];for(let i=1;i<=6;i++)b+=(p[i-1]==='L'?EAN_L:EAN_G)[+c[i]];b+='01010';for(let i=7;i<=12;i++)b+=EAN_R[+c[i]];return b+'101';}
 const FXL={none:'없음',gold:'금박',silver:'은박',rose:'로즈골드박',emboss:'형압 (엠보싱)',spotuv:'부분 UV'};
+const PRESSL={none:'없음',emboss:'양각 형압 (튀어나오게)',deboss:'음각 형압 (들어가게)'};
 const COATL={matte:'무광 코팅',gloss:'유광 코팅',soft:'소프트터치'};
 const SCENES={plain:{label:'단색 배경'},wood:{label:'원목 테이블',bg:['#EEE6DA','#CDB79C'],tile:1.4},marble:{label:'대리석',bg:['#F4F2EE','#D9D5CE'],tile:2.2},linen:{label:'리넨 천',bg:['#F0EBE3','#D8CEBF'],tile:.9},concrete:{label:'콘크리트',bg:['#E6E5E2','#BFBCB6'],tile:1.8}};
 const UNIT={mm:1,cm:10,in:25.4};
@@ -703,7 +732,11 @@ function computeSpec(st){st=st||S;
   const bk=st.board&&BOARD_FOR[type].includes(st.board)?st.board:BOARD_DEF[type];
   const mat=Object.assign({key:bk},BOARDS[bk]), c=st.clearance, t=mat.t;
   const inner={w:p.w+2*c,d:p.d+2*c,h:p.h+2*c};
-  const outer=type==='drawer'?{w:inner.w+4*t+1,d:inner.d+2*t,h:inner.h+4*t+1}:{w:inner.w+2*t,d:inner.d+2*t,h:inner.h+2*t};
+  let outer=type==='drawer'?{w:inner.w+4*t+1,d:inner.d+2*t,h:inner.h+4*t+1}:{w:inner.w+2*t,d:inner.d+2*t,h:inner.h+2*t},tentLay=false;
+  if(type==='tent'){// the panels lean in, so the product's cross-section must fit inside the triangle: a box twice its depth
+    // and twice its height holds it at mid-height. Tall bottles lie down along the ridge instead.
+    const dia=Math.max(p.w,p.d);tentLay=p.h>dia*1.25;const L=(tentLay?p.h:p.w)+2*c,a=(tentLay?dia:p.d)+2*c,b=(tentLay?dia:p.h)+2*c;
+    outer={w:L+2*t,d:2*a+2*t,h:2*b+t};}
   const tabH=clamp(outer.w*.45,25,45),lidH=clamp(outer.h*.33,12,45),handleH=clamp(outer.d*.45,25,45);
   const mx=Math.max(p.w,p.d,p.h), why=[];
   if(bt==='auto'){
@@ -713,7 +746,7 @@ function computeSpec(st){st=st||S;
     else why.push('세워서 진열하는 제품이라, 매장과 온라인에서 가장 흔히 쓰는 리버스 턱엔드 박스를 골랐어요.');
   } else why.push('직접 고른 박스 형태를 쓰고 있어요.');
   why.push(`제품 사방에 ${c}mm 여유를 두고 재질 두께 ${t}mm를 더해 바깥 치수를 계산했어요.`);
-  return {type,mat,prod:p,inner,outer,why,tabH,lidH,handleH,leaflet:['tuck','hanger'].includes(type)?(+st.leaflet||0):0,cont:resolveCont(st)};
+  return {type,mat,prod:p,inner,outer,why,tabH,lidH,handleH,tentLay,leaflet:['tuck','hanger'].includes(type)?(+st.leaflet||0):0,cont:resolveCont(st)};
 }
 function derivePal(c){const L=lum(c);return{bg:c,ink:L>.42?'#1C1B19':'#FFFBF3',acc:L>.42?mix(c,'#000000',.32):mix(c,'#FFFFFF',.42)};}
 function resolveDesign(spec,st){st=st||S;
@@ -730,7 +763,7 @@ function resolveDesign(spec,st){st=st||S;
   if(fh){S2.head=s=>`${fh.w.head} ${s}px "${fh.fam}", ${SANS}`;S2.brand=s=>`${fh.w.brand} ${s}px "${fh.fam}", ${SANS}`;}
   if(fb){S2.body=s=>`${fb.w.body} ${s}px "${fb.fam}", ${SANS}`;}
   const layout=LAYOUTS[st.layout]?st.layout:'classic';
-  return {exp:E,style,st:S2,pal,palIdx,pattern,layout,text,logo:st.logo,faceImg:st.faceImg||{},fx:st.fx||'none',barcode:eanNormalize(st.barcode),seedBase:st.seed*131+hash(style+pattern)};
+  return {exp:E,style,st:S2,pal,palIdx,pattern,layout,text,logo:st.logo,faceImg:st.faceImg||{},fx:st.fx==='emboss'?'none':(st.fx||'none'),press:PRESSL[st.press]&&st.press!=='none'?st.press:(st.fx==='emboss'?'emboss':'none'),foilSize:st.foilSize||'mid',barcode:eanNormalize(st.barcode),seedBase:st.seed*131+hash(style+pattern)};
 }
 
 /* ---------------- canvas helpers ---------------- */
@@ -1104,7 +1137,7 @@ function drawFaces(spec,P,opt){
   if(tent&&P.pattern==='none'&&P.style!=='kraft'){// triangle ends carry the pattern even when the slopes are plain
     const sp=Object.assign({},P,{pattern:'splatter'});for(const key of['left','right']){const cv=makeCanvas(px(D),px(SL));paintPattern(cv.getContext('2d'),cv.width,cv.height,sp,k,mulberry(P.seedBase+9),false);C[key].ctx('패턴').drawImage(cv,0,0);}}
   if(spec.type==='lidbase'){C.lidFront=base('lidFront',W+2*spec.mat.t,spec.lidH,pat(5,W,spec.lidH));C.lidSide=base('lidSide',D+2*spec.mat.t,spec.lidH,pat(6,D,spec.lidH));}
-  for(const key in C)C[key].fx=P.fx&&P.fx!=='none';
+  for(const key in C)C[key].fx=(P.fx&&P.fx!=='none')||(P.press&&P.press!=='none');
   const d=(name,fn,...a)=>fn(C[name],C[name].w,C[name].h,P,k,...a);
   if(P.plain){}else{
   if(spec.type==='lidbase'){d('lidFront',drawSide,'brand');d('lidSide',drawSide,'name');}
@@ -1112,7 +1145,7 @@ function drawFaces(spec,P,opt){
   else if(topHero){d('top',drawHero);d('front',drawSide,'brand');d('back',drawSide,'name');d('left',drawSide,'name');d('right',drawSide,'brand');if(P.exp)d('bottom',drawExportBack,spec,true);else d('bottom',drawInfo,spec);}
   else{d('front',drawHero);if(P.exp){d('back',drawExportBack,spec,false);d('right',drawExportSide,spec);}else{d('back',drawInfo,spec);d('right',drawSide,'name');}d('left',drawSide,'brand');d('top',drawTop);d('bottom',drawBottom,spec);}
   }
-  const F={};for(const key in C){F[key]=C[key].flat();if(C[key].mask){F['mask_'+key]=C[key].mask;if(P.fx==='emboss'){const b=makeCanvas(C[key].w,C[key].h),bx=b.getContext('2d');try{bx.filter=`blur(${Math.max(1,k*.35)}px)`;}catch(e){}bx.drawImage(C[key].mask,0,0);F['bump_'+key]=b;}}}
+  const F={};for(const key in C){F[key]=C[key].flat();if(C[key].mask){F['mask_'+key]=C[key].mask;if(P.press&&P.press!=='none'){const b=makeCanvas(C[key].w,C[key].h),bx=b.getContext('2d');try{bx.filter=`blur(${Math.max(1,k*.35)}px)`;}catch(e){}bx.drawImage(C[key].mask,0,0);F['bump_'+key]=b;}}}
   if(spec.leaflet){const n=spec.leaflet,pw=px(W),ph=px(H),lines=leafLines(P);const per=Math.ceil(lines.length/n);
     for(let i=0;i<n;i++){const c=makeCanvas(pw,ph),x=c.getContext('2d'),st=P.st,m=Math.min(pw,ph)*.08;x.fillStyle='#FFFFFF';x.fillRect(0,0,pw,ph);x.fillStyle=P.pal.bg;x.fillRect(0,0,pw,Math.max(ph*.12,6*k));
       const hs=clamp(Math.min(pw,ph)*.075,2.2*k,6*k);x.font=st.head(hs);x.fillStyle=lum(P.pal.bg)>.45?P.pal.ink:'#FFFFFF';x.textBaseline='middle';x.fillText(i===0?'사용 방법':i===n-1?'제품 정보':'주의사항',m,Math.max(ph*.12,6*k)/2);
@@ -1462,12 +1495,14 @@ function buildScene(T,spec,P,F,st){
   const om=map=>keep(coat==='gloss'?new THREE.MeshPhysicalMaterial({map,roughness:.3,clearcoat:.8,clearcoatRoughness:.1,metalness:0,envMap:T.env,envMapIntensity:.45}):new THREE.MeshStandardMaterial({map,roughness:coat==='soft'?.98:(P.style==='luxury'?.6:.84),metalness:0}));
   const flatMat=om(tex(F.flat));
   function panel(parent,w,h,mo,mi,setup){const g=keep(new THREE.PlaneGeometry(w,h));const a=new THREE.Mesh(g,mo);a.castShadow=true;a.receiveShadow=true;const b=new THREE.Mesh(g,mi);b.receiveShadow=true;const o=new THREE.Group();o.add(a,b);if(setup)setup(o);parent.add(o);return o;}
-  const fx=st.fx||'none',FXC={gold:'#D9B24C',silver:'#D3D6DA',rose:'#E3A88C'};
-  function addFx(o,key,w,h){const m=F['mask_'+key];if(fx==='none'||!m)return;const aT=tex(m);let mat;
-    if(FXC[fx])mat=new THREE.MeshStandardMaterial({color:new THREE.Color(FXC[fx]),metalness:1,roughness:.2,envMap:T.env,envMapIntensity:1.5,alphaMap:aT,transparent:true,alphaTest:.35});
-    else if(fx==='spotuv')mat=new THREE.MeshPhysicalMaterial({map:tex(F[key]),roughness:.03,clearcoat:1,clearcoatRoughness:.02,envMap:T.env,envMapIntensity:1.3,alphaMap:aT,transparent:true,alphaTest:.35});
-    else if(fx==='emboss')mat=new THREE.MeshStandardMaterial({map:tex(F[key]),bumpMap:tex(F['bump_'+key]||m),bumpScale:.006,roughness:.75,alphaMap:aT,transparent:true,alphaTest:.15});
-    if(!mat)return;keep(mat);const ms=new THREE.Mesh(keep(new THREE.PlaneGeometry(w,h)),mat);ms.position.z=fx==='emboss'?.0009:.0005;o.add(ms);}
+  const fx=P.fx||'none',press=P.press||'none',FXC={gold:'#D9B24C',silver:'#D3D6DA',rose:'#E3A88C'};
+  // foil / spot UV / blind press on the brand and product-name lettering; a press (raised or recessed) can sit under a foil
+  function addFx(o,key,w,h){const m=F['mask_'+key];if((fx==='none'&&press==='none')||!m)return;const aT=tex(m);let mat;
+    const bump=press!=='none'?{bumpMap:tex(F['bump_'+key]||m),bumpScale:press==='deboss'?-.007:.007}:{};
+    if(FXC[fx])mat=new THREE.MeshStandardMaterial(Object.assign({color:new THREE.Color(FXC[fx]),metalness:1,roughness:.2,envMap:T.env,envMapIntensity:1.5,alphaMap:aT,transparent:true,alphaTest:.35},bump));
+    else if(fx==='spotuv')mat=new THREE.MeshPhysicalMaterial(Object.assign({map:tex(F[key]),roughness:.03,clearcoat:1,clearcoatRoughness:.02,envMap:T.env,envMapIntensity:1.3,alphaMap:aT,transparent:true,alphaTest:.35},bump));
+    else if(press!=='none')mat=new THREE.MeshStandardMaterial(Object.assign({map:tex(F[key]),roughness:.75,alphaMap:aT,transparent:true,alphaTest:.15},bump));
+    if(!mat)return;keep(mat);const ms=new THREE.Mesh(keep(new THREE.PlaneGeometry(w,h)),mat);ms.position.z=press==='emboss'?.0009:.0005;o.add(ms);}
   function face(parent,key,w,h,setup,mi){const o=panel(parent,w,h,om(tex(F[key])),mi||inMat,setup);addFx(o,key,w,h);return o;}
   const walls=(g,hh)=>{face(g,'front',W,hh,o=>o.position.set(0,hh/2,D/2));face(g,'back',W,hh,o=>{o.position.set(0,hh/2,-D/2);o.rotation.y=Math.PI;});face(g,'right',D,hh,o=>{o.position.set(W/2,hh/2,0);o.rotation.y=Math.PI/2;});face(g,'left',D,hh,o=>{o.position.set(-W/2,hh/2,0);o.rotation.y=-Math.PI/2;});};
   const parts={type:spec.type};
@@ -1581,6 +1616,7 @@ function buildScene(T,spec,P,F,st){
     const gx=(st.foldMode?W/2+H+.12:W/2+Math.max(.16,W*.3,pr.foot.w*.6))+pr.foot.w/2;
     pr.group.position.set(gx,0,D*.12);grp.add(pr.group);
     const inner=pr.group.clone();inner.position.set(0,prodY,0);prodParent.add(inner);
+    if(spec.type==='tent'&&spec.tentLay){inner.rotation.z=-Math.PI/2;inner.position.set(-st.h*s/2,prodY+Math.max(st.w,st.d)*s/2,0);}
     parts.prodOut=pr.group;parts.prodIn=inner;xmax=gx+pr.foot.w/2;depth=Math.max(D,pr.foot.d+D*.24);height=Math.max(height,st.h*s);
   }catch(e){console.error(e);}
   T.parts=parts;applyOpen(T.openV||0,parts,st.showProduct!==false);
@@ -1855,7 +1891,7 @@ function renderSpec(spec,P,urls){
   <table>
   <tr><td>박스 형태</td><td><b>${TYPES[spec.type].label}</b></td></tr>
   <tr><td>재질</td><td>${spec.mat.name}</td></tr>
-  <tr><td>후가공·코팅</td><td>${FXL[S.fx]||'없음'} · ${COATL[S.coat]||'무광 코팅'}${S.insideColor?' · 안쪽 인쇄':''}</td></tr>
+  <tr><td>후가공·코팅</td><td>${FXL[P.fx]||'없음'}${P.press&&P.press!=='none'?' + '+PRESSL[P.press]:''} · ${COATL[S.coat]||'무광 코팅'}${S.insideColor?' · 안쪽 인쇄':''}</td></tr>
   <tr><td>제품 크기</td><td>${r1(p.w)} × ${r1(p.d)} × ${r1(p.h)} mm</td></tr>
   <tr><td>내경 (안쪽)</td><td>${r1(i.w)} × ${r1(i.d)} × ${r1(i.h)} mm</td></tr>
   <tr><td>외경 (바깥)</td><td><b>${r1(o.w)} × ${r1(o.d)} × ${r1(o.h)} mm</b></td></tr>
@@ -1894,7 +1930,7 @@ function renderControls(P){
   renderContUI(P);
   const sp=current?current.spec:computeSpec();const bs=$('#board');bs.innerHTML=BOARD_FOR[sp.type].map(k=>`<option value="${k}">${BOARDS[k].name}</option>`).join('');bs.value=sp.mat.key;
   $('#leafSel').value=String(S.leaflet||0);$('#leafB').hidden=!(current&&current.spec.leaflet);
-  $('#fxSel').value=S.fx;$('#cmSel').value=S.colorMode==='rgb'?'rgb':'cmyk';$('#coatSel').value=S.coat;$('#inSel').value=S.insideColor||'';
+  $('#fxSel').value=S.fx==='emboss'?'none':S.fx;$('#pressSel').value=PRESSL[S.press]?S.press:(S.fx==='emboss'?'emboss':'none');$('#cmSel').value=S.colorMode==='rgb'?'rgb':'cmyk';$('#coatSel').value=S.coat;$('#inSel').value=S.insideColor||'';
   $('#boardHint').innerHTML=`<b>${sp.mat.short}</b> — ${sp.mat.desc}${sp.mat.kind==='paper'?' <br>IV는 아이보리지(흰색 판지)의 줄임말이고, 250~400g은 1㎡당 무게예요. 숫자가 클수록 두껍고 단단해요.':''}`;
 }
 
@@ -1920,7 +1956,7 @@ async function rebuild(){
     const dl=buildDieline(spec,P,F);lastSVG=dl.svg;spec.geo=dl.geo;$('#dl').innerHTML=dl.svg;
     for(const k of['front','back','top','bottom'])dl.urls[k]=dl.urls[k]||F[k].toDataURL('image/jpeg',.86);
     current={spec,P,F};
-    renderRec(spec,P);renderSpec(spec,P,dl.urls);renderControls(P);renderTextPanel(P);renderExpUI();
+    renderRec(spec,P);renderSpec(spec,P,dl.urls);try{renderCost(spec,P);}catch(e){console.error(e);}renderControls(P);renderTextPanel(P);renderExpUI();
   }catch(e){console.error(e);}
   building=false;$('#busy').classList.remove('on');
   if(pending){pending=false;rebuild();}
@@ -2798,7 +2834,8 @@ async function cmykPdf(pages,Wm,Hm,M0){
 }
 $('#dlPdf').onclick=async()=>{if(!current)return;try{work('PDF 만드는 중…');const r=await buildDielineFiles(false);work(null);saveBlob(`${baseName()}_칼선도면.pdf`,r.pdf);}catch(e){console.error(e);work(null);toast('PDF를 만들지 못했어요');}};
 $('#dlZip').onclick=async()=>{if(!current)return;try{work('도면 파일 만드는 중…');const r=await buildDielineFiles(true);work(null);saveBlob(`${baseName()}_칼선도면.zip`,r.zip);}catch(e){console.error(e);work(null);toast('도면 파일을 만들지 못했어요');}};
-$('#fxSel').addEventListener('change',e=>{S.fx=e.target.value;rebuild();});
+$('#fxSel').addEventListener('change',e=>{if(S.fx==='emboss'&&!S.press)S.press='emboss';S.fx=e.target.value;rebuild();});
+$('#pressSel').addEventListener('change',e=>{if(S.fx==='emboss')S.fx='none';S.press=e.target.value;rebuild();});
 $('#cmSel').addEventListener('change',e=>{S.colorMode=e.target.value;rebuild();toast(S.colorMode==='rgb'?'RGB로 바꿨어요. PDF·AI가 화면용 색으로 나와요':'CMYK로 바꿨어요. PDF·AI가 인쇄용 CMYK로 나와요');});
 $('#coatSel').addEventListener('change',e=>{S.coat=e.target.value;rebuild();});
 $('#inSel').addEventListener('change',e=>{S.insideColor=e.target.value;rebuild();});
@@ -2959,6 +2996,97 @@ $('#comList').addEventListener('click',e=>{const z=e.target.closest('[data-zoom]
   for(const k of SAVE_KEYS)if(k in st)S[k]=st[k];edited.brand=edited.name=true;if(S.scene==='plain'){const g=BGS[S.bg||0];$('#p3d').style.background=`linear-gradient(${g.a},${g.b})`;}if($('#sceneSel'))$('#sceneSel').value=S.scene;applyScene();
   rebuild();showTab('p3d');toast(`"${it.title}" 설정을 불러왔어요. 왼쪽에서 바꿔 보세요`);});
 
+/* ---------------- production cost estimate ("제작 단가" tab) ---------------- */
+// Rough market-rate model in KRW, for planning only. Every number lives in COST so real supplier rates can be dropped in.
+const COST={
+  m2:{iv250:420,iv300:500,iv350:580,iv400:660,sc300:380,sc350:440,sc400:500,art300:520,kraft300:480,fflute:850,eflute:950,bflute:1150,aflute:1350,ebflute:1750,rigid15:2400,rigid20:2900,rigid25:3400}, // 원/㎡
+  sheets:[{name:'국전지',w:939,h:636},{name:'4×6전지',w:1091,h:788}],grip:15,margin:10,gap:3,spoil:.08,spoilFix:80,
+  plate:25000,pressSetup:80000,run1000:35000,digitalSheet:1800,digitalMax:300,
+  lamM2:{matte:180,gloss:180,soft:380},lamMin:40000,
+  foilDie:70000,foilRun:45,foilMin:50000,foilSize:{small:.75,mid:1,large:1.45},
+  pressDie:90000,pressRun:35,pressMin:50000,uvDie:45000,uvRun:30,
+  dieBase:60000,diePerMm:10,cutSetup:40000,cutSheet:25,
+  glue:{tuck:[30000,18],hanger:[30000,20],handle:[40000,35],tent:[30000,180],mailer:[0,0],rsc:[20000,12],lidbase:[50000,700],drawer:[60000,900]},
+  leafPanel:40};
+const QTYS=[500,1000,3000,5000,10000];
+const PRINTL={cmyk:'4도 (CMYK)',cmyk1:'4도 + 별색 1도',c1:'1도',none:'무인쇄'};
+function imposition(TW,TH){// how many flat blanks fit on one press sheet, either orientation
+  let best=null;for(const sh of COST.sheets){const W=sh.w-2*COST.margin,H=sh.h-COST.margin-COST.grip;
+    for(const rot of[false,true]){const bw=(rot?TH:TW)+COST.gap,bh=(rot?TW:TH)+COST.gap,nx=Math.floor((W+COST.gap)/bw),ny=Math.floor((H+COST.gap)/bh),n=nx*ny;
+      if(n<1)continue;const eff=n*TW*TH/(sh.w*sh.h),cand={sheet:sh,rot,nx,ny,n,eff};if(!best||n/(sh.w*sh.h)>best.n/(best.sheet.w*best.sheet.h))best=cand;}}
+  return best;}
+function estimateCost(spec,P,st,qty){
+  const g=spec.geo,TW=g.TW,TH=g.TH,kind=spec.mat.kind,key=spec.mat.key,m2=COST.m2[key]||600,items=[];
+  const add=(name,v,note)=>items.push({name,v:Math.max(0,Math.round(v)),note:note||''});
+  // rule length for the cutting die: every panel outline (shared edges count once per panel, close enough) plus the creases
+  const cutLen=(g.pieces||[]).reduce((s,p)=>s+edgesOf(p).reduce((a,[u,v])=>a+Math.hypot(v[0]-u[0],v[1]-u[1]),0),0)*.6+(g.folds||[]).reduce((s,f)=>s+Math.hypot(f[2]-f[0],f[3]-f[1]),0);
+  const flatSheets=kind==='paper';let imp=null,sheets=0,sheetM2=0;
+  if(flatSheets){imp=imposition(TW,TH);if(!imp)return null;sheets=Math.ceil(qty/imp.n*(1+COST.spoil))+COST.spoilFix;sheetM2=imp.sheet.w*imp.sheet.h/1e6;add('종이 ('+spec.mat.short+')',sheets*sheetM2*m2,`${imp.sheet.name} ${sheets.toLocaleString()}장 · 한 장에 ${imp.n}개`);}
+  else{const area=TW*TH/1e6*qty*(1+COST.spoil+.04);add(kind==='rigid'?'합지 (그레이보드+싸개지)':'골판지 ('+spec.mat.short+')',area*m2,`${(area).toFixed(1)}㎡`);}
+  const pm=st.printMode||'cmyk',colors={cmyk:4,cmyk1:5,c1:1,none:0}[pm]??4,sides=st.insideColor?2:1;
+  if(colors){const runSheets=flatSheets?sheets:Math.ceil(qty*(1+COST.spoil));
+    const offset=(COST.plate*colors+COST.pressSetup+COST.run1000*colors/4*runSheets/1000)*sides;
+    const digital=flatSheets&&sheets<=COST.digitalMax?COST.digitalSheet*sheets*sides:Infinity;
+    add(digital<offset?'인쇄 (디지털)':'인쇄 (옵셋)',Math.min(offset,digital),`${PRINTL[pm]}${sides>1?' · 안쪽 인쇄 포함':''}`);}
+  const area=flatSheets?sheets*sheetM2:TW*TH/1e6*qty*1.1;
+  add('코팅 ('+(COATL[st.coat]||'무광 코팅')+')',Math.max(COST.lamMin,area*(COST.lamM2[st.coat]||180)));
+  if(['gold','silver','rose'].includes(P.fx)){const k=COST.foilSize[st.foilSize||'mid'];add(FXL[P.fx],Math.max(COST.foilMin,COST.foilDie*k+COST.foilRun*k*qty),'동판 + 찍는 비용');}
+  if(P.fx==='spotuv')add('부분 UV',COST.uvDie+COST.uvRun*qty);
+  if(P.press&&P.press!=='none')add(P.press==='deboss'?'음각 형압':'양각 형압',Math.max(COST.pressMin,COST.pressDie+COST.pressRun*qty),'형압 동판 + 찍는 비용');
+  add('칼선 목형 (한 번)',COST.dieBase+cutLen*(imp?imp.n:1)*COST.diePerMm/10,`칼선·접는 선 ${(cutLen/10).toFixed(0)}cm × ${imp?imp.n:1}개`);
+  add('톰슨 (자르기·접는 선)',COST.cutSetup+COST.cutSheet*(flatSheets?sheets:qty));
+  const gl=COST.glue[spec.type]||[30000,20];if(gl[0]||gl[1])add(spec.type==='lidbase'||spec.type==='drawer'?'싸개·조립 (수작업)':spec.type==='tent'?'접착·리본 묶기':'접착 (기계)',gl[0]+gl[1]*qty);
+  if(spec.leaflet)add('설명서 (리플렛)',COST.leafPanel*spec.leaflet*qty);
+  const total=items.reduce((s,i)=>s+i.v,0);return{qty,items,total,unit:total/qty,imp,sheets};}
+function fitReport(spec){// does the container actually sit inside the box?
+  const p=spec.prod,i=spec.inner,c=spec.outer,t=spec.mat.t,f=v=>r1(v);
+  if(spec.type==='tent'){const dia=Math.max(p.w,p.d),a=spec.tentLay?dia:p.d,b=spec.tentLay?dia:p.h,Di=c.d-2*t,Hi=c.h-t,half=Di/2*(1-b/Hi),ok=half>=a/2-.01;
+    return{ok,lines:[spec.tentLay?`용기를 눕혀서 넣어요 (길이 ${f(p.h)}mm가 상자 가로 방향)`:'용기를 세워서 넣어요',`용기 꼭대기 높이(${f(b)}mm)에서 남는 폭 ${f(half*2)}mm / 필요한 폭 ${f(a)}mm`,ok?'삼각 단면 안에 들어가요':'꼭대기가 비스듬한 면에 닿아요']};}
+  const m=[(i.w-p.w)/2,(i.d-p.d)/2,(i.h-p.h)];const ok=m.every(v=>v>=-.01);
+  return{ok,lines:[`좌우 여유 ${f(m[0])}mm · 앞뒤 여유 ${f(m[1])}mm · 위 여유 ${f(m[2])}mm`,ok?'용기가 안에 들어가요':'용기가 상자보다 커요']};}
+const won=v=>Math.round(v).toLocaleString('ko-KR')+'원';
+function impSVG(imp,TW,TH){if(!imp)return'';const sh=imp.sheet,s=260/sh.w,bw=(imp.rot?TH:TW),bh=(imp.rot?TW:TH);let r='';
+  for(let y=0;y<imp.ny;y++)for(let x=0;x<imp.nx;x++)r+=`<rect x="${(COST.margin+x*(bw+COST.gap))*s}" y="${(COST.grip+y*(bh+COST.gap))*s}" width="${bw*s}" height="${bh*s}" rx="2" fill="#FDECE5" stroke="#EE5A2F" stroke-width="1"/>`;
+  return`<svg viewBox="0 0 ${sh.w*s} ${sh.h*s}" width="100%" style="max-width:300px;display:block"><rect width="${sh.w*s}" height="${sh.h*s}" fill="#fff" stroke="#BDB6AA"/>${r}</svg>`;}
+function renderCost(spec,P){
+  const el=$('#cost');if(!el||!spec.geo)return;const st=S,q=st.costQty||1000;
+  const rows=QTYS.concat(QTYS.includes(q)?[]:[q]).sort((a,b)=>a-b).map(n=>estimateCost(spec,P,st,n)).filter(Boolean);
+  const cur=estimateCost(spec,P,st,q);if(!cur){el.innerHTML='<div class="empty">이 크기는 전지 한 장에 들어가지 않아요. 크기를 확인해 주세요.</div>';return;}
+  const fit=fitReport(spec),mx=Math.max(...cur.items.map(i=>i.v));
+  // cheaper alternatives with the same look, worked out with the same model
+  const alt=[];const tryAlt=(label,patch)=>{const s2=Object.assign({},st,patch),sp=computeSpec(s2);sp.geo=buildDieline(sp,resolveDesign(sp,s2),null,true).geo;sp.geo.cuts=sp.geo.cuts||[];const e=estimateCost(sp,resolveDesign(sp,s2),s2,q);if(e&&e.total<cur.total*.97)alt.push({label,save:1-e.total/cur.total,unit:e.unit});};
+  try{if(['gold','silver','rose','spotuv'].includes(P.fx))tryAlt('박·부분 UV 빼기',{fx:'none'});if(P.press!=='none')tryAlt('형압 빼기',{press:'none',fx:st.fx==='emboss'?'none':st.fx});
+    if(/^iv/.test(spec.mat.key))tryAlt('아이보리지 → SC마닐라',{board:spec.mat.key.replace('iv','sc')});if(st.coat==='soft')tryAlt('소프트터치 → 무광 코팅',{coat:'matte'});
+    if(['lidbase','drawer'].includes(spec.type))tryAlt('합지 상자 → 턱엔드 + 금박',{boxType:'tuck',fx:'gold',board:null});if(st.insideColor)tryAlt('안쪽 인쇄 빼기',{insideColor:''});}catch(e){console.error(e);}
+  const boards=BOARD_FOR[spec.type].map(k=>`<option value="${k}"${k===spec.mat.key?' selected':''}>${BOARDS[k].name}</option>`).join('');
+  const sel=(id,opts,v)=>`<select id="${id}">${Object.entries(opts).map(([k,l])=>`<option value="${k}"${k===v?' selected':''}>${l}</option>`).join('')}</select>`;
+  el.innerHTML=`<div class="cost-grid">
+  <div class="cost-side">
+    <div class="cost-h">견적 조건</div>
+    <div class="field"><label>수량</label><div class="qchips">${QTYS.map(n=>`<button class="chip${n===q?' on':''}" data-q="${n}">${n.toLocaleString()}개</button>`).join('')}<input type="number" id="cQty" min="100" step="100" value="${q}"></div></div>
+    <div class="field"><label>종이 재질</label><select id="cBoard">${boards}</select></div>
+    <div class="grid2"><div class="field"><label>인쇄</label>${sel('cPrint',PRINTL,st.printMode||'cmyk')}</div><div class="field"><label>안쪽 인쇄</label>${sel('cIn',{'':'안 함',design:'배경색',acc:'포인트 색'},st.insideColor||'')}</div></div>
+    <div class="grid2"><div class="field"><label>코팅</label>${sel('cCoat',COATL,st.coat||'matte')}</div><div class="field"><label>박 · 부분 UV</label>${sel('cFoil',{none:'없음',gold:'금박',silver:'은박',rose:'로즈골드박',spotuv:'부분 UV'},P.fx)}</div></div>
+    <div class="grid2"><div class="field"><label>박 면적</label>${sel('cFoilSize',{small:'작게 (로고만)',mid:'보통 (브랜드·제품명)',large:'크게 (테두리·패턴까지)'},st.foilSize||'mid')}</div><div class="field"><label>형압 (글씨 높이)</label>${sel('cPress',{none:'없음',emboss:'양각 — 튀어나오게',deboss:'음각 — 들어가게'},P.press)}</div></div>
+    <div class="fit ${fit.ok?'ok':'bad'}"><b>${fit.ok?'✓':'!'} 용기 맞춤</b>${fit.lines.map(l=>`<span>${l}</span>`).join('')}</div>
+  </div>
+  <div class="cost-main">
+    <div class="cost-big"><div><small>1개당 예상 단가 · ${q.toLocaleString()}개 기준</small><b>${won(cur.unit)}</b></div><div><small>총액 (부가세 별도)</small><b class="sm">${won(cur.total)}</b></div></div>
+    <div class="cost-items">${cur.items.map(i=>`<div class="ci"><span class="n">${i.name}${i.note?`<em>${i.note}</em>`:''}</span><span class="bar"><i style="width:${(i.v/mx*100).toFixed(1)}%"></i></span><b>${won(i.v)}</b></div>`).join('')}</div>
+    <table class="cost-tb"><tr><th>수량</th>${rows.map(r=>`<th class="${r.qty===q?'on':''}">${r.qty.toLocaleString()}개</th>`).join('')}</tr>
+      <tr><td>1개당</td>${rows.map(r=>`<td class="${r.qty===q?'on':''}">${won(r.unit)}</td>`).join('')}</tr>
+      <tr><td>총액</td>${rows.map(r=>`<td class="${r.qty===q?'on':''}">${won(r.total)}</td>`).join('')}</tr></table>
+    <div class="cost-two">
+      <div class="card"><h4>판걸이 — 전지 한 장에 ${cur.imp?cur.imp.n+'개':'(면적 기준)'}</h4>${cur.imp?`${impSVG(cur.imp,spec.geo.TW,spec.geo.TH)}<p>${cur.imp.sheet.name} ${cur.imp.sheet.w}×${cur.imp.sheet.h}mm · 펼친 크기 ${r1(spec.geo.TW)}×${r1(spec.geo.TH)}mm${cur.imp.rot?' (돌려서 배치)':''} · 종이 효율 ${Math.round(cur.imp.eff*100)}%</p>`:'<p>골판지·합지는 전지 대신 면적으로 계산해요.</p>'}</div>
+      <div class="card"><h4>비슷한 느낌, 더 저렴하게</h4>${alt.length?alt.sort((a,b)=>b.save-a.save).slice(0,4).map(a=>`<div class="alt"><span>${a.label}</span><b>-${Math.round(a.save*100)}%</b><em>${won(a.unit)}/개</em></div>`).join(''):'<p>지금 조건이 이미 경제적인 편이에요.</p>'}</div>
+    </div>
+    <p class="cost-note">일반적인 시세로 계산한 <b>참고용 예상 금액</b>이에요. 부가세·배송비는 빠져 있고, 실제 금액은 인쇄소·제조사 견적으로 꼭 확인하세요. 종이 단가·후가공 단가는 실제 단가표를 받으면 바로 바꿔 넣을 수 있어요.</p>
+  </div></div>`;}
+$('#cost').addEventListener('click',e=>{const b=e.target.closest('[data-q]');if(!b)return;S.costQty=+b.dataset.q;renderCost(current.spec,current.P);});
+$('#cost').addEventListener('change',e=>{const id=e.target.id,v=e.target.value;
+  if(id==='cQty'){S.costQty=clamp(Math.round(+v||1000),50,1000000);renderCost(current.spec,current.P);return;}
+  if(id==='cBoard')S.board=v;else if(id==='cPrint')S.printMode=v;else if(id==='cIn')S.insideColor=v;else if(id==='cCoat')S.coat=v;
+  else if(id==='cFoil'){S.fx=v;}else if(id==='cFoilSize')S.foilSize=v;else if(id==='cPress'){if(S.fx==='emboss')S.fx='none';S.press=v;}else return;rebuild();});
 // floating panels (lighting, text editing) can be dragged by their title bar and stay inside the 3D view
 function makeDraggable(panel){const bar=panel.querySelector('.tph');if(!bar)return;let st=null;
   bar.addEventListener('pointerdown',e=>{if(e.target.closest('button,input,select'))return;const pr=panel.getBoundingClientRect(),hr=panel.offsetParent.getBoundingClientRect();
